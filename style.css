@@ -778,6 +778,11 @@ body {
 }
 
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
   /* Hide all dashboard UI, preview panels, and HTML document layouts */
   body, html {
     background-color: #FFFFFF !important;
@@ -785,7 +790,7 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     height: 100% !important;
-    overflow: visible !important;
+    overflow: hidden !important; /* Prevent iOS Safari from ever generating a second blank page */
   }
   
   .app-container,
@@ -800,15 +805,16 @@ body {
   /* Print ONLY the flat, pre-rendered static high-res image */
   .print-only-img {
     display: block !important;
-    width: 210mm !important; /* Fits A4 width */
-    height: 297mm !important; /* Fits A4 height */
+    width: 100vw !important;
+    height: 100vh !important;
+    object-fit: contain !important;
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box;
-    page-break-after: avoid;
-    page-break-before: avoid;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
   }
-  box-sizing: border-box;
 }
 
 
