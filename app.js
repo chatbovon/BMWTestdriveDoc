@@ -417,8 +417,8 @@ function compressImage(file, callback) {
   reader.onload = function (e) {
     const img = new Image();
     img.style.position = "absolute";
-    img.style.width = "0";
-    img.style.height = "0";
+    img.style.left = "-9999px";
+    img.style.top = "-9999px";
     img.style.opacity = "0";
     img.style.pointerEvents = "none";
     document.body.appendChild(img);
@@ -436,8 +436,8 @@ function compressImage(file, callback) {
     img.onload = function () {
       try {
         const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
+        let width = img.naturalWidth || img.width || 1024;
+        let height = img.naturalHeight || img.height || 1024;
         
         const MAX_SIZE = 1024;
         if (width > height) {
@@ -483,7 +483,7 @@ function compressImage(file, callback) {
   reader.onerror = function (readerErr) {
     console.error("FileReader failed:", readerErr);
     showLoading(false);
-    alert("ไม่สามารถอ่านรูปภาพนี้ได้ กรุณาลองอัปโหลดรูปภาพอื่น");
+    showErrorMessage("ไม่สามารถอ่านรูปภาพนี้ได้ กรุณาลองอัปโหลดรูปภาพอื่น");
   };
   
   reader.readAsDataURL(file);
