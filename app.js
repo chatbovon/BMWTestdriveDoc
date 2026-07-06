@@ -1704,10 +1704,10 @@ function generatePrintRender(callback) {
   element.style.boxShadow = "none";
   element.style.transform = "none";
   
-  // Set print padding (Android gets +10mm padding left/right as requested)
+  // Set print padding (Android padding reduced by 5mm as requested)
   const isAndroidDevice = document.body.classList.contains("os-android");
   if (isAndroidDevice) {
-    element.style.padding = "10mm 16mm 10mm 16mm";
+    element.style.padding = "10mm 11mm 10mm 11mm";
   } else {
     element.style.padding = "10mm 6mm 10mm 6mm";
   }

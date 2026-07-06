@@ -657,8 +657,8 @@ body {
 /* Crop image attachment area inside doc */
 .doc-image-attachment {
   border: 1px dashed #A0A0A0;
-  width: 112mm;
-  height: 55mm; /* Reduced from 70mm to save vertical space */
+  width: 123mm; /* Increased by 10% for iOS (from original 112mm baseline) */
+  height: 60.5mm; /* Increased by 10% for iOS (from original 55mm baseline) to maintain aspect ratio */
   margin: 0;
   background-color: #FAFAFA;
   display: flex;
@@ -891,16 +891,16 @@ body {
 
 /* Android OS Custom Layout Override */
 .os-android .a4-document {
-  padding-left: 22mm !important;
-  padding-right: 22mm !important;
+  padding-left: 17mm !important; /* Reduced by 5mm from 22mm */
+  padding-right: 17mm !important; /* Reduced by 5mm from 22mm */
 }
 
-/* Android OS Font Size Overrides (Revert to v67 baseline sizes) */
+/* Android OS Font Size Overrides (baseline sizes + 10%) */
 .os-android .doc-title {
-  font-size: 15pt !important;
+  font-size: 16.5pt !important;
 }
 .os-android .doc-subtitle {
-  font-size: 13pt !important;
+  font-size: 14.5pt !important;
 }
 .os-android .doc-date-line,
 .os-android .doc-body-paragraph,
@@ -908,5 +908,11 @@ body {
 .os-android .doc-license-attachment-wrapper .label-text,
 .os-android .sign-line,
 .os-android .sign-role {
-  font-size: 11pt !important;
+  font-size: 12pt !important;
+}
+
+/* Android OS License Box Dimension overrides (+15% from original 112mm x 55mm baseline) */
+.os-android .doc-image-attachment {
+  width: 129mm !important;
+  height: 63mm !important;
 }
