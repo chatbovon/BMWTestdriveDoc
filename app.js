@@ -234,13 +234,22 @@ function initUploadEvents() {
 
   // Process button click
   btnProcessImage.addEventListener("click", async () => {
-    if (!currentFile || !currentImageBase64) return;
+    console.log("Process button clicked. currentFile:", !!currentFile, "currentImageBase64 length:", currentImageBase64 ? currentImageBase64.length : 0);
+    
+    if (!currentFile || !currentImageBase64) {
+      showErrorMessage(
+        "ไม่สามารถส่งข้อมูลใบขับขี่ไปวิเคราะห์ได้เนื่องจากข้อมูลไม่สมบูรณ์:\n" + 
+        "- ไฟล์รูปภาพ: " + (currentFile ? `พร้อมใช้งาน (${currentFile.name})` : "ไม่พบไฟล์ในระบบ") + "\n" +
+        "- รหัสถอดภาพ Base64: " + (currentImageBase64 ? "พร้อมใช้งาน" : "ว่างเปล่า (การอ่านไฟล์ล้มเหลว)")
+      );
+      return;
+    }
     
     if (isAiMode) {
       // Run AI OCR + Card border detection
       showLoading(true);
       try {
-        const result = await processDriversLicense(currentImageBase64, currentFile.type);
+        const result = await processDriversLicense(currentImageBase64, currentFile.type || "image/jpeg");
         extractedData = {
           name: result.name || "",
           id_card: result.id_card || "",
@@ -298,7 +307,10 @@ function initUploadEvents() {
         initializeCropper();
       } catch (error) {
         console.error("AI processing failed. Falling back to manual mode.", error);
-        alert("เกิดข้อผิดพลาดในการวิเคราะห์ด้วย AI: " + error.message + "\n\nระบบจะปรับเข้าสู่โหมดป้อนข้อมูลด้วยตนเอง");
+        showErrorMessage(
+          "เกิดข้อผิดพลาดในการวิเคราะห์ด้วย AI: " + error.message + 
+          "\n\nระบบจะปรับเข้าสู่โหมดกรอกข้อมูลด้วยตนเอง (Manual Mode) ให้โดยอัตโนมัติ"
+        );
         // Fall back to manual processing
         extractedData = { 
           name: "", 
@@ -329,7 +341,7 @@ function initUploadEvents() {
 function handleFileSelection(file) {
   try {
     if (!file) {
-      alert("ไม่พบไฟล์รูปภาพ");
+      showErrorMessage("ไม่พบไฟล์รูปภาพ");
       return;
     }
     
@@ -344,7 +356,7 @@ function handleFileSelection(file) {
     const isImgType = file.type && file.type.startsWith("image/");
                            
     if (!isImgType && !isImgExtension) {
-      alert("กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น (.jpg, .png, .heic)");
+      showErrorMessage("กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น (.jpg, .png, .heic)");
       return;
     }
     
@@ -355,6 +367,17 @@ function handleFileSelection(file) {
       try {
         currentImageBase64 = compressedBase64;
         uploadPreview.src = displayUrl;
+        
+        // Check for raw HEIC/HEIF selected from iOS Files app
+        const isHeic = fileName.endsWith(".heic") || fileName.endsWith(".heif") || mimeType.includes("heic");
+        if (isHeic) {
+          showErrorMessage(
+            "ตรวจพบรูปภาพรูปแบบ HEIC ของ iPhone\n\n" + 
+            "• เบราว์เซอร์บนมือถือไม่สามารถเรนเดอร์ภาพ HEIC บนเว็บเพจได้โดยตรง จึงมีไอคอนรูปภาพเสีย [?]\n" + 
+            "• แต่คุณสามารถกดปุ่ม 'วิเคราะห์รูปภาพด้วย AI' สีน้ำเงินด้านล่างต่อไปได้เลย ระบบจะส่งภาพ HEIC ไปถอดข้อมูล OCR บนคลาวด์ได้ตามปกติครับ\n\n" +
+            "(แนะนำ: เพื่อผลลัพธ์ที่ดีที่สุดในการจัดขอบการ์ด ให้กดปุ่ม 'ลบรูปภาพ' แล้วเลือกรูปภาพจาก 'คลังรูปภาพ' (Photo Library) แทนการเข้าผ่านแอพ 'ไฟล์' เพื่อให้ iOS แปลงไฟล์เป็น JPEG โดยอัตโนมัติครับ)"
+          );
+        }
         
         const promptEl = uploadZone.querySelector(".upload-prompt");
         if (promptEl) promptEl.classList.add("hidden");
@@ -373,7 +396,7 @@ function handleFileSelection(file) {
         }
       } catch (err) {
         console.error("Error in handleFileSelection callback:", err);
-        alert("เกิดข้อผิดพลาดในการแสดงผลพรีวิว: " + err.message);
+        showErrorMessage("เกิดข้อผิดพลาดในการแสดงผลพรีวิว: " + err.message);
       } finally {
         showLoading(false);
       }
@@ -381,7 +404,7 @@ function handleFileSelection(file) {
   } catch (globalErr) {
     console.error("Critical error in handleFileSelection:", globalErr);
     showLoading(false);
-    alert("เกิดข้อผิดพลาดในการเลือกไฟล์: " + globalErr.message);
+    showErrorMessage("เกิดข้อผิดพลาดในการเลือกไฟล์: " + globalErr.message);
   }
 }
 
@@ -1493,4 +1516,69 @@ function solveLinearSystem(A, B) {
     x[i] = (B[i] - sum) / A[i][i];
   }
   return x;
+}
+
+/**
+ * Creates and displays a gorgeous floating error banner at the top of the viewport.
+ * Bypasses native alert() blocking mechanisms in iOS WebViews/LINE.
+ */
+function showErrorMessage(msg) {
+  let errBox = document.getElementById("diagnostic-error-banner");
+  if (!errBox) {
+    errBox = document.createElement("div");
+    errBox.id = "diagnostic-error-banner";
+    errBox.style.cssText = `
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.98), rgba(185, 28, 28, 0.98));
+      color: #FFFFFF;
+      padding: 16px;
+      border-radius: 12px;
+      z-index: 99999;
+      font-family: var(--font-ui), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 0.8rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: slideInDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    `;
+    
+    // Add slide-in animation styles if not present
+    if (!document.getElementById("diagnostic-animation-style")) {
+      const style = document.createElement("style");
+      style.id = "diagnostic-animation-style";
+      style.textContent = `
+        @keyframes slideInDown {
+          from { transform: translateY(-30px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    document.body.appendChild(errBox);
+  }
+  
+  errBox.innerHTML = `
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.88rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>แจ้งเตือนระบบ</span>
+      </div>
+      <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; color:#FFFFFF; cursor:pointer; font-weight:bold; font-size:1.2rem; line-height:1; padding:0 4px;">&times;</button>
+    </div>
+    <div style="opacity: 0.95; line-height: 1.45; white-space: pre-wrap; font-size: 0.76rem;">${msg}</div>
+  `;
+  
+  // Auto remove after 12 seconds
+  setTimeout(() => {
+    if (errBox && errBox.parentNode) {
+      errBox.remove();
+    }
+  }, 12000);
 }

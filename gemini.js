@@ -97,6 +97,15 @@ Analyze the provided image and extract:
   };
 
   try {
+    // Sanitize MIME type for Gemini API compatibility
+    let sanitizedMime = mimeType || "image/jpeg";
+    if (sanitizedMime === "application/octet-stream" || sanitizedMime === "" || sanitizedMime.includes("heic") || sanitizedMime.includes("heif")) {
+      sanitizedMime = "image/jpeg";
+    }
+    
+    // Update payload with sanitized MIME type
+    payload.contents[0].parts[1].inlineData.mimeType = sanitizedMime;
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
