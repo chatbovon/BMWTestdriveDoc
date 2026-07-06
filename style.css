@@ -883,8 +883,8 @@ body {
   bottom: 5px; /* Sits right above the dots */
   left: 50%;
   transform: translateX(-50%);
-  max-height: 72px; /* Increased by 50% from 48px */
-  max-width: 240px; /* Increased by 50% from 160px */
+  max-height: 108px; /* Increased by another 50% from 72px */
+  max-width: 360px; /* Increased by another 50% from 240px */
   object-fit: contain;
   pointer-events: none;
 }
