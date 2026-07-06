@@ -1692,10 +1692,12 @@ function generatePrintRender(callback) {
   // Save original styling
   const origBoxShadow = element.style.boxShadow;
   const origTransform = element.style.transform;
+  const origPadding = element.style.padding;
   
   // Reset styling temporarily for crisp flat capture
   element.style.boxShadow = "none";
   element.style.transform = "none";
+  element.style.padding = "10mm 6mm 10mm 6mm"; // Temporarily reduce padding for printing to avoid double-margins!
   
   // Use scale: 2 (crisp print detail without iOS Safari canvas crash)
   const scaleFactor = 2;
@@ -1719,6 +1721,7 @@ function generatePrintRender(callback) {
       // Restore styling
       element.style.boxShadow = origBoxShadow;
       element.style.transform = origTransform;
+      element.style.padding = origPadding;
       if (overlayTitle) overlayTitle.textContent = origTitle;
       if (overlayText) overlayText.textContent = origText;
       showLoading(false);
@@ -1730,6 +1733,7 @@ function generatePrintRender(callback) {
       console.error("Print pre-rendering failed:", err);
       element.style.boxShadow = origBoxShadow;
       element.style.transform = origTransform;
+      element.style.padding = origPadding;
       if (overlayTitle) overlayTitle.textContent = origTitle;
       if (overlayText) overlayText.textContent = origText;
       showLoading(false);
@@ -1743,6 +1747,7 @@ function generatePrintRender(callback) {
     console.error("Print pre-rendering synchronous error:", err);
     element.style.boxShadow = origBoxShadow;
     element.style.transform = origTransform;
+    element.style.padding = origPadding;
     if (overlayTitle) overlayTitle.textContent = origTitle;
     if (overlayText) overlayText.textContent = origText;
     showLoading(false);
