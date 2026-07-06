@@ -657,8 +657,8 @@ body {
 /* Crop image attachment area inside doc */
 .doc-image-attachment {
   border: 1px dashed #A0A0A0;
-  width: 123mm; /* Increased by 10% for iOS (from original 112mm baseline) */
-  height: 60.5mm; /* Increased by 10% for iOS (from original 55mm baseline) to maintain aspect ratio */
+  width: 101mm; /* Reduced width by 10% for iOS (from original 112mm baseline) */
+  height: 55mm; /* Kept baseline height at 55mm */
   margin: 0;
   background-color: #FAFAFA;
   display: flex;
@@ -911,8 +911,8 @@ body {
   font-size: 12pt !important;
 }
 
-/* Android OS License Box Dimension overrides (+15% from original 112mm x 55mm baseline) */
+/* Android OS License Box Dimension overrides (Reduced width by 15% from original 112mm baseline) */
 .os-android .doc-image-attachment {
-  width: 129mm !important;
-  height: 63mm !important;
+  width: 95mm !important;
+  height: 55mm !important;
 }
