@@ -1116,9 +1116,6 @@ function initFormEvents() {
     
     // Go to final step
     switchStep(stepActions);
-    
-    // Pre-render the document as a flat high-resolution image for printing
-    setTimeout(generatePrintRender, 100);
   });
 }
 
@@ -1128,66 +1125,7 @@ function updatePreviewDocumentText() {
   docDate.textContent = inputDate.value.trim() || ".......................................................";
 }
 
-/**
- * Pre-renders the HTML A4 document preview into a single high-resolution image
- * using html2canvas. This flat image is used during printing to bypass browser printing bugs.
- */
-function generatePrintRender() {
-  showLoading(true);
-  
-  // Use a custom message for this step
-  const overlayTitle = loadingOverlay.querySelector("h3");
-  const overlayText = loadingOverlay.querySelector("p");
-  const origTitle = overlayTitle.textContent;
-  const origText = overlayText.textContent;
-  
-  overlayTitle.textContent = "กำลังเตรียมไฟล์สำหรับสั่งพิมพ์...";
-  overlayText.textContent = "ระบบกำลังแปลงเอกสารเป็นรูปภาพความละเอียดสูงเพื่อความถูกต้องร้อยเปอร์เซ็นต์ในการสั่งพิมพ์";
-  
-  const element = document.getElementById("document-preview");
-  
-  // Save original box shadow
-  const origBoxShadow = element.style.boxShadow;
-  element.style.boxShadow = "none";
-  
-  try {
-    if (typeof window.html2canvas !== "function") {
-      throw new Error("html2canvas library is not loaded globally");
-    }
-    
-    window.html2canvas(element, {
-      scale: 3, // Very high scale for crisp, print-quality text rendering
-      useCORS: true,
-      logging: false
-    }).then(canvas => {
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
-      const printImg = document.getElementById("print-rendered-image");
-      if (printImg) {
-        printImg.src = dataUrl;
-      }
-      
-      // Restore original values
-      element.style.boxShadow = origBoxShadow;
-      overlayTitle.textContent = origTitle;
-      overlayText.textContent = origText;
-      showLoading(false);
-    }).catch(err => {
-      console.error("Print pre-rendering failed:", err);
-      element.style.boxShadow = origBoxShadow;
-      overlayTitle.textContent = origTitle;
-      overlayText.textContent = origText;
-      showLoading(false);
-      alert("เกิดข้อผิดพลาดในการเตรียมไฟล์สั่งพิมพ์ แต่คุณสามารถทดลองกดพิมพ์ได้ทันที");
-    });
-  } catch (err) {
-    console.error("Print pre-rendering synchronous error:", err);
-    element.style.boxShadow = origBoxShadow;
-    overlayTitle.textContent = origTitle;
-    overlayText.textContent = origText;
-    showLoading(false);
-    alert("ระบบไม่สามารถเตรียมไฟล์สั่งพิมพ์ล่วงหน้าได้ชั่วคราว คุณสามารถดำเนินขั้นตอนการสั่งพิมพ์ได้ตามปกติ");
-  }
-}
+
 
 /* ==========================================================================
    Step 4: Exports and Actions Panel
@@ -1674,9 +1612,6 @@ function initSignatureEvents() {
       const sigDataUrl = signatureCanvas.toDataURL("image/png");
       docSignatureImg.src = sigDataUrl;
       docSignatureImg.classList.remove("hidden");
-      
-      // Regenerate the A4 preview document image to include the signature!
-      generatePrintRender();
       
       // Go back to the actions step
       switchStep(stepActions);

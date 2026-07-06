@@ -783,34 +783,57 @@ body {
     margin: 0;
   }
 
-  /* Hide all dashboard UI, preview panels, and HTML document layouts */
+  /* Hide everything unrelated to printing */
+  .control-panel,
+  .preview-header-bar,
+  .print-only-img,
+  #webview-banner,
+  #diagnostic-error-banner,
+  .step-number,
+  .btn,
+  .panel-footer {
+    display: none !important;
+  }
+  
+  /* Reset layout of parents to let A4 document fill the page naturally */
   body, html {
     background-color: #FFFFFF !important;
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
-    height: 100% !important;
-    overflow: hidden !important; /* Prevent iOS Safari from ever generating a second blank page */
+    width: 210mm !important;
+    height: 297mm !important;
+    overflow: hidden !important; /* Strictly enforce single-page printing */
   }
   
   .app-container,
-  .control-panel,
   .preview-panel,
-  .preview-header-bar,
-  .a4-page-viewport,
-  .a4-document {
-    display: none !important; /* Disable HTML rendering in print media */
-  }
-  
-  /* Print ONLY the flat, pre-rendered static high-res image */
-  .print-only-img {
+  .a4-page-viewport {
     display: block !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    object-fit: contain !important;
     margin: 0 !important;
     padding: 0 !important;
-    box-sizing: border-box;
+    width: 210mm !important;
+    height: 297mm !important;
+    background: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    transform: none !important;
+  }
+  
+  /* Style the document to fit print page borderlessly */
+  .a4-document {
+    display: flex !important; /* Keep original flex column layout */
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    transform: none !important; /* Clear screen scale factor! */
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 20mm 15mm 15mm 15mm !important; /* Original padding */
+    box-sizing: border-box !important;
+    background-color: #FFFFFF !important;
     page-break-after: avoid !important;
     page-break-before: avoid !important;
     page-break-inside: avoid !important;
@@ -868,11 +891,11 @@ body {
 
 .doc-signature-img {
   position: absolute;
-  bottom: 4px; /* Sits right above the dots */
+  bottom: 5px; /* Sits right above the dots */
   left: 50%;
   transform: translateX(-50%);
-  max-height: 48px;
-  max-width: 160px;
+  max-height: 72px; /* Increased by 50% from 48px */
+  max-width: 240px; /* Increased by 50% from 160px */
   object-fit: contain;
   pointer-events: none;
 }
