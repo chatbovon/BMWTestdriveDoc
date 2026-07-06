@@ -347,11 +347,12 @@ function handleFileSelection(file) {
   showLoading(true);
   
   // Compress image and load as base64 Data URL (guarantees print preview and html2canvas visibility)
-  compressImage(file, (compressedBase64, mimeType) => {
+  compressImage(file, (compressedBase64, displayUrl, mimeType) => {
     try {
       currentImageBase64 = compressedBase64;
       
-      uploadPreview.src = `data:${mimeType};base64,${compressedBase64}`;
+      // Safe, memory-efficient source assignment (either ObjectURL or compressed ~200KB URL)
+      uploadPreview.src = displayUrl;
       
       // Toggle UI display
       const promptEl = uploadZone.querySelector(".upload-prompt");
@@ -415,36 +416,36 @@ function compressImage(file, callback) {
         const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.75);
         const base64 = compressedDataUrl.split(",")[1];
         
-        URL.revokeObjectURL(objectUrl);
-        callback(base64, "image/jpeg");
+        // Use the compressed canvas URL for safe rendering display
+        callback(base64, compressedDataUrl, "image/jpeg");
       } catch (canvasErr) {
-        console.error("Canvas compression failed, falling back to direct base64 reader:", canvasErr);
-        URL.revokeObjectURL(objectUrl);
-        triggerFileReaderFallback(file, callback);
+        console.error("Canvas compression failed, falling back to direct base64 reader with ObjectURL:", canvasErr);
+        triggerFileReaderFallback(file, objectUrl, callback);
       }
     };
     
     img.onerror = function (imgErr) {
-      console.error("Image loading failed in compressImage, falling back to direct base64 reader:", imgErr);
-      URL.revokeObjectURL(objectUrl);
-      triggerFileReaderFallback(file, callback);
+      console.error("Image loading failed in compressImage, falling back to direct base64 reader with ObjectURL:", imgErr);
+      triggerFileReaderFallback(file, objectUrl, callback);
     };
     
     img.src = objectUrl;
   } catch (err) {
     console.error("Critical error in compressImage objectUrl process:", err);
-    triggerFileReaderFallback(file, callback);
+    triggerFileReaderFallback(file, null, callback);
   }
 }
 
-function triggerFileReaderFallback(file, callback) {
+function triggerFileReaderFallback(file, objectUrl, callback) {
   try {
     const reader = new FileReader();
     reader.onload = function (e) {
       try {
         const base64 = e.target.result.split(",")[1];
         const mime = file.type || "image/jpeg";
-        callback(base64, mime);
+        // Use objectUrl for preview display if available to save iOS memory
+        const displayUrl = objectUrl || URL.createObjectURL(file) || e.target.result;
+        callback(base64, displayUrl, mime);
       } catch (err) {
         showLoading(false);
         alert("ไม่สามารถอ่านรูปภาพนี้ได้ กรุณาลองอัปโหลดรูปภาพอื่น");
@@ -465,6 +466,16 @@ function resetUploadState() {
   currentFile = null;
   currentImageBase64 = null;
   fileInput.value = "";
+  
+  // Revoke ObjectURL if it was a blob URL to release browser memory
+  if (uploadPreview.src && uploadPreview.src.startsWith("blob:")) {
+    try {
+      URL.revokeObjectURL(uploadPreview.src);
+    } catch (e) {
+      console.warn("Failed to revoke object URL:", e);
+    }
+  }
+  
   uploadPreview.src = "";
   uploadZone.querySelector(".upload-prompt").classList.remove("hidden");
   uploadPreviewContainer.classList.add("hidden");
