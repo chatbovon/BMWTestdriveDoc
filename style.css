@@ -41,6 +41,12 @@
   padding: 0;
 }
 
+html, body {
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   font-family: var(--font-ui);
   background-color: var(--color-dark-bg);
@@ -582,6 +588,8 @@ body {
   position: relative;
   font-family: var(--font-doc);
   box-sizing: border-box;
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
   
   /* CSS scale transforms will be applied dynamically via JS in app.js */
 }
@@ -614,7 +622,7 @@ body {
   text-indent: 1.2cm;
   line-height: 1.35; /* Reduced line-height */
   margin-bottom: 6px; /* Reduced margin */
-  text-align: justify;
+  text-align: left; /* Changed from justify to fix Safari spacing gaps */
 }
 
 .editable-fill {
@@ -632,7 +640,7 @@ body {
   font-size: 13pt; /* Increased by 15% from 11pt */
   line-height: 1.35; /* Reduced line-height */
   margin-bottom: 8px; /* Reduced margin */
-  text-align: justify;
+  text-align: left; /* Changed from justify to fix Safari spacing gaps */
 }
 
 .doc-terms-list li {
