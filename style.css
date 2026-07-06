@@ -894,3 +894,19 @@ body {
   padding-left: 22mm !important;
   padding-right: 22mm !important;
 }
+
+/* Android OS Font Size Overrides (Revert to v67 baseline sizes) */
+.os-android .doc-title {
+  font-size: 15pt !important;
+}
+.os-android .doc-subtitle {
+  font-size: 13pt !important;
+}
+.os-android .doc-date-line,
+.os-android .doc-body-paragraph,
+.os-android .doc-terms-list,
+.os-android .doc-license-attachment-wrapper .label-text,
+.os-android .sign-line,
+.os-android .sign-role {
+  font-size: 11pt !important;
+}
