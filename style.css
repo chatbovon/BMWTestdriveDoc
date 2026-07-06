@@ -891,6 +891,7 @@ body {
 
 /* Android OS Custom Layout Override */
 .os-android .a4-document {
+  padding-top: 30mm !important; /* Increased by 15mm (baseline 15mm) */
   padding-left: 17mm !important; /* Reduced by 5mm from 22mm */
   padding-right: 17mm !important; /* Reduced by 5mm from 22mm */
 }
