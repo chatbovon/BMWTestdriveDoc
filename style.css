@@ -802,8 +802,8 @@ body {
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
-    width: 210mm !important;
-    height: 297mm !important;
+    width: 100% !important;
+    height: 100% !important;
     overflow: hidden !important; /* Strictly enforce single-page printing */
   }
   
@@ -813,26 +813,26 @@ body {
     display: block !important;
     margin: 0 !important;
     padding: 0 !important;
-    width: 210mm !important;
-    height: 297mm !important;
+    width: 100% !important;
+    height: 100% !important;
     background: none !important;
     box-shadow: none !important;
     border: none !important;
     transform: none !important;
   }
   
-  /* Style the document to fit print page borderlessly */
+  /* Style the document to scale and fit inside the browser printable area */
   .a4-document {
     display: flex !important; /* Keep original flex column layout */
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
-    width: 210mm !important;
-    height: 297mm !important;
+    width: 100% !important;
+    height: 100% !important;
     transform: none !important; /* Clear screen scale factor! */
     box-shadow: none !important;
     margin: 0 !important;
-    padding: 20mm 15mm 15mm 15mm !important; /* Original padding */
+    padding: 10mm 12mm 10mm 12mm !important; /* Compact print margins to prevent spillover */
     box-sizing: border-box !important;
     background-color: #FFFFFF !important;
     page-break-after: avoid !important;
