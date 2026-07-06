@@ -381,12 +381,28 @@ function handleFileSelection(file) {
 
 /**
  * Compresses an image file client-side before sending to API
- * Uses memory-efficient ObjectURLs and provides native binary fallbacks for iOS/HEIC
+ * Appends the image to the DOM temporarily to bypass iOS Safari detached image loading freeze
  */
 function compressImage(file, callback) {
-  try {
-    const objectUrl = URL.createObjectURL(file);
+  const reader = new FileReader();
+  reader.onload = function (e) {
     const img = new Image();
+    img.style.position = "absolute";
+    img.style.width = "0";
+    img.style.height = "0";
+    img.style.opacity = "0";
+    img.style.pointerEvents = "none";
+    document.body.appendChild(img);
+    
+    const cleanup = () => {
+      try {
+        if (img.parentNode) {
+          document.body.removeChild(img);
+        }
+      } catch (err) {
+        console.warn("Cleanup failed:", err);
+      }
+    };
     
     img.onload = function () {
       try {
@@ -412,54 +428,36 @@ function compressImage(file, callback) {
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, width, height);
         
-        // Export as compressed JPEG (75% quality is perfect for OCR and speed)
         const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.75);
         const base64 = compressedDataUrl.split(",")[1];
         
-        // Use the compressed canvas URL for safe rendering display
+        cleanup();
         callback(base64, compressedDataUrl, "image/jpeg");
       } catch (canvasErr) {
-        console.error("Canvas compression failed, falling back to direct base64 reader with ObjectURL:", canvasErr);
-        triggerFileReaderFallback(file, objectUrl, callback);
+        console.error("Canvas draw failed, falling back to raw data:", canvasErr);
+        cleanup();
+        const base64 = e.target.result.split(",")[1];
+        callback(base64, e.target.result, file.type || "image/jpeg");
       }
     };
     
     img.onerror = function (imgErr) {
-      console.error("Image loading failed in compressImage, falling back to direct base64 reader with ObjectURL:", imgErr);
-      triggerFileReaderFallback(file, objectUrl, callback);
+      console.error("Image load failed, falling back to raw data:", imgErr);
+      cleanup();
+      const base64 = e.target.result.split(",")[1];
+      callback(base64, e.target.result, file.type || "image/jpeg");
     };
     
-    img.src = objectUrl;
-  } catch (err) {
-    console.error("Critical error in compressImage objectUrl process:", err);
-    triggerFileReaderFallback(file, null, callback);
-  }
-}
-
-function triggerFileReaderFallback(file, objectUrl, callback) {
-  try {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      try {
-        const base64 = e.target.result.split(",")[1];
-        const mime = file.type || "image/jpeg";
-        // Use objectUrl for preview display if available to save iOS memory
-        const displayUrl = objectUrl || URL.createObjectURL(file) || e.target.result;
-        callback(base64, displayUrl, mime);
-      } catch (err) {
-        showLoading(false);
-        alert("ไม่สามารถอ่านรูปภาพนี้ได้ กรุณาลองอัปโหลดรูปภาพอื่น");
-      }
-    };
-    reader.onerror = function () {
-      showLoading(false);
-      alert("ไม่สามารถอ่านรูปภาพนี้ได้ กรุณาลองอัปโหลดรูปภาพอื่น");
-    };
-    reader.readAsDataURL(file);
-  } catch (fallbackErr) {
+    img.src = e.target.result;
+  };
+  
+  reader.onerror = function (readerErr) {
+    console.error("FileReader failed:", readerErr);
     showLoading(false);
     alert("ไม่สามารถอ่านรูปภาพนี้ได้ กรุณาลองอัปโหลดรูปภาพอื่น");
-  }
+  };
+  
+  reader.readAsDataURL(file);
 }
 
 function resetUploadState() {
