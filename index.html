@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" referrerpolicy="no-referrer" />
   
   <!-- Custom Styling -->
-  <link rel="stylesheet" href="style.css?v=19">
+  <link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
   <!-- App Shell -->
@@ -33,7 +33,7 @@
         <div class="logo-area">
           <div class="title-wrapper">
             <h1>BMW Test Drive</h1>
-            <p>ระบบสร้างเอกสารใบขอทดลองขับขี่ (v64)</p>
+            <p>ระบบสร้างเอกสารใบขอทดลองขับขี่ (v65)</p>
           </div>
         </div>
         
@@ -292,6 +292,10 @@
 
   <!-- Cropper.js Script -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" referrerpolicy="no-referrer"></script>
+  
+  <!-- Print-only static render container -->
+  <img id="print-rendered-image" class="print-only-img" src="" alt="BMW Test Drive Document Print Render">
 
 
   <!-- OpenCV.js Library WebAssembly Loader -->
@@ -309,7 +313,7 @@
 
 
   <!-- Application Logic Modules -->
-  <script type="module" src="gemini.js?v=64"></script>
-  <script type="module" src="app.js?v=64"></script>
+  <script type="module" src="gemini.js?v=65"></script>
+  <script type="module" src="app.js?v=65"></script>
 </body>
 </html>

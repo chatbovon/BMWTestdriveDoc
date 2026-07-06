@@ -784,57 +784,34 @@ body {
 }
 
 @media print {
-  /* Hide everything unrelated to printing */
-  .control-panel,
-  .preview-header-bar,
-  .print-only-img,
-  #webview-banner,
-  #diagnostic-error-banner,
-  .step-number,
-  .btn,
-  .panel-footer {
-    display: none !important;
-  }
-  
-  /* Reset layout of parents to let A4 document fill the page naturally */
+  /* Hide all dashboard UI, preview panels, and HTML document layouts */
   body, html {
     background-color: #FFFFFF !important;
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
-    width: 100% !important;
     height: 100% !important;
-    overflow: hidden !important; /* Strictly enforce single-page printing */
+    overflow: hidden !important; /* Prevent iOS Safari from ever generating a second blank page */
   }
   
   .app-container,
+  .control-panel,
   .preview-panel,
-  .a4-page-viewport {
-    display: block !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: none !important;
-    box-shadow: none !important;
-    border: none !important;
-    transform: none !important;
+  .preview-header-bar,
+  .a4-page-viewport,
+  .a4-document {
+    display: none !important; /* Disable HTML rendering in print media */
   }
   
-  /* Style the document to scale and fit inside the browser printable area */
-  .a4-document {
-    display: flex !important; /* Keep original flex column layout */
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    transform: none !important; /* Clear screen scale factor! */
-    box-shadow: none !important;
+  /* Print ONLY the flat, pre-rendered static high-res image */
+  .print-only-img {
+    display: block !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    object-fit: contain !important;
     margin: 0 !important;
-    padding: 10mm 12mm 10mm 12mm !important; /* Compact print margins to prevent spillover */
-    box-sizing: border-box !important;
-    background-color: #FFFFFF !important;
+    padding: 0 !important;
+    box-sizing: border-box;
     page-break-after: avoid !important;
     page-break-before: avoid !important;
     page-break-inside: avoid !important;

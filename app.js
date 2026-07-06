@@ -1139,7 +1139,9 @@ function initExportEvents() {
 
   // Print natively button (triggers styled media query output)
   btnPrintNative.addEventListener("click", () => {
-    window.print();
+    generatePrintRender(() => {
+      window.print();
+    });
   });
 
   // Start Over button
@@ -1661,5 +1663,93 @@ function resizeSignatureCanvas() {
     
     // Restore previous drawing stretched to new resolution width
     signatureCtx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, signatureCanvas.width, signatureCanvas.height);
+  }
+}
+
+/**
+ * Pre-renders the HTML A4 document preview into a single flat image inside printImg container
+ * using html2canvas at scale 2 to avoid iOS memory limits while maintaining document-text scaling.
+ */
+function generatePrintRender(callback) {
+  showLoading(true);
+  
+  // Use a custom message for this step
+  const overlayTitle = loadingOverlay.querySelector("h3");
+  const overlayText = loadingOverlay.querySelector("p");
+  const origTitle = overlayTitle ? overlayTitle.textContent : "กำลังโหลด...";
+  const origText = overlayText ? overlayText.textContent : "กรุณารอสักครู่";
+  
+  if (overlayTitle) overlayTitle.textContent = "กำลังเตรียมไฟล์สำหรับสั่งพิมพ์...";
+  if (overlayText) overlayText.textContent = "ระบบกำลังบันทึกข้อมูลและลายเซ็นลงบนเอกสารความละเอียดสูง...";
+  
+  const element = document.getElementById("document-preview");
+  if (!element) {
+    showLoading(false);
+    if (typeof callback === "function") callback();
+    return;
+  }
+  
+  // Save original styling
+  const origBoxShadow = element.style.boxShadow;
+  const origTransform = element.style.transform;
+  
+  // Reset styling temporarily for crisp flat capture
+  element.style.boxShadow = "none";
+  element.style.transform = "none";
+  
+  // Use scale: 2 (crisp print detail without iOS Safari canvas crash)
+  const scaleFactor = 2;
+  
+  try {
+    if (typeof window.html2canvas !== "function") {
+      throw new Error("html2canvas library is not loaded");
+    }
+    
+    window.html2canvas(element, {
+      scale: scaleFactor,
+      useCORS: true,
+      logging: false
+    }).then(canvas => {
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+      const printImg = document.getElementById("print-rendered-image");
+      if (printImg) {
+        printImg.src = dataUrl;
+      }
+      
+      // Restore styling
+      element.style.boxShadow = origBoxShadow;
+      element.style.transform = origTransform;
+      if (overlayTitle) overlayTitle.textContent = origTitle;
+      if (overlayText) overlayText.textContent = origText;
+      showLoading(false);
+      
+      if (typeof callback === "function") {
+        callback();
+      }
+    }).catch(err => {
+      console.error("Print pre-rendering failed:", err);
+      element.style.boxShadow = origBoxShadow;
+      element.style.transform = origTransform;
+      if (overlayTitle) overlayTitle.textContent = origTitle;
+      if (overlayText) overlayText.textContent = origText;
+      showLoading(false);
+      
+      // Fallback
+      if (typeof callback === "function") {
+        callback();
+      }
+    });
+  } catch (err) {
+    console.error("Print pre-rendering synchronous error:", err);
+    element.style.boxShadow = origBoxShadow;
+    element.style.transform = origTransform;
+    if (overlayTitle) overlayTitle.textContent = origTitle;
+    if (overlayText) overlayText.textContent = origText;
+    showLoading(false);
+    
+    // Fallback
+    if (typeof callback === "function") {
+      callback();
+    }
   }
 }
