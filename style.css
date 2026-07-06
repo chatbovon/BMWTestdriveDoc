@@ -888,3 +888,9 @@ body {
   object-fit: contain;
   pointer-events: none;
 }
+
+/* Android OS Custom Layout Override */
+.os-android .a4-document {
+  padding-left: 22mm !important;
+  padding-right: 22mm !important;
+}

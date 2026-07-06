@@ -124,6 +124,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
   
+  // Detect if Android to apply CSS modifications
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if (isAndroid) {
+    document.body.classList.add("os-android");
+  }
+  
   // Bind Event Listeners
   initUploadEvents();
   initCropperEvents();
@@ -1697,7 +1703,14 @@ function generatePrintRender(callback) {
   // Reset styling temporarily for crisp flat capture
   element.style.boxShadow = "none";
   element.style.transform = "none";
-  element.style.padding = "10mm 6mm 10mm 6mm"; // Temporarily reduce padding for printing to avoid double-margins!
+  
+  // Set print padding (Android gets +10mm padding left/right as requested)
+  const isAndroidDevice = document.body.classList.contains("os-android");
+  if (isAndroidDevice) {
+    element.style.padding = "10mm 16mm 10mm 16mm";
+  } else {
+    element.style.padding = "10mm 6mm 10mm 6mm";
+  }
   
   // Use scale: 2 (crisp print detail without iOS Safari canvas crash)
   const scaleFactor = 2;
