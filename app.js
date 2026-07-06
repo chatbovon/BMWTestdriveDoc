@@ -348,69 +348,117 @@ function handleFileSelection(file) {
   
   // Compress image and load as base64 Data URL (guarantees print preview and html2canvas visibility)
   compressImage(file, (compressedBase64, mimeType) => {
-    currentImageBase64 = compressedBase64;
-    
-    uploadPreview.src = `data:${mimeType};base64,${compressedBase64}`;
-    
-    // Toggle UI display
-    uploadZone.querySelector(".upload-prompt").classList.add("hidden");
-    uploadPreviewContainer.classList.remove("hidden");
-    btnProcessImage.classList.remove("hidden");
-    
-    // Update button text depending on mode
-    if (isAiMode) {
-      btnProcessImage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"/><path d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5.5Z"/><path d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1Z"/></svg> วิเคราะห์รูปภาพด้วย AI`;
-    } else {
-      btnProcessImage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> ดำเนินการต่อ (แมนนวล)`;
+    try {
+      currentImageBase64 = compressedBase64;
+      
+      uploadPreview.src = `data:${mimeType};base64,${compressedBase64}`;
+      
+      // Toggle UI display
+      const promptEl = uploadZone.querySelector(".upload-prompt");
+      if (promptEl) promptEl.classList.add("hidden");
+      
+      uploadPreviewContainer.classList.remove("hidden");
+      btnProcessImage.classList.remove("hidden");
+      
+      // Update button text depending on mode
+      if (isAiMode) {
+        btnProcessImage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"/><path d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5.5Z"/><path d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1Z"/></svg> วิเคราะห์รูปภาพด้วย AI`;
+      } else {
+        btnProcessImage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> ดำเนินการต่อ (แมนนวล)`;
+      }
+      
+      if (window.lucide) {
+        window.lucide.createIcons();
+      }
+    } catch (err) {
+      console.error("Error in handleFileSelection callback:", err);
+    } finally {
+      showLoading(false);
     }
-    
-    if (window.lucide) {
-      window.lucide.createIcons();
-    }
-    
-    showLoading(false);
   });
 }
 
 /**
  * Compresses an image file client-side before sending to API
- * Caps max dimension at 1024px and exports as compressed JPEG
+ * Uses memory-efficient ObjectURLs and provides native binary fallbacks for iOS/HEIC
  */
 function compressImage(file, callback) {
-  const reader = new FileReader();
-  reader.onload = function (e) {
+  try {
+    const objectUrl = URL.createObjectURL(file);
     const img = new Image();
+    
     img.onload = function () {
-      const canvas = document.createElement("canvas");
-      let width = img.width;
-      let height = img.height;
-      
-      const MAX_SIZE = 1024;
-      if (width > height) {
-        if (width > MAX_SIZE) {
-          height = Math.round((height * MAX_SIZE) / width);
-          width = MAX_SIZE;
+      try {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+        
+        const MAX_SIZE = 1024;
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height = Math.round((height * MAX_SIZE) / width);
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width = Math.round((width * MAX_SIZE) / height);
+            height = MAX_SIZE;
+          }
         }
-      } else {
-        if (height > MAX_SIZE) {
-          width = Math.round((width * MAX_SIZE) / height);
-          height = MAX_SIZE;
-        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Export as compressed JPEG (75% quality is perfect for OCR and speed)
+        const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.75);
+        const base64 = compressedDataUrl.split(",")[1];
+        
+        URL.revokeObjectURL(objectUrl);
+        callback(base64, "image/jpeg");
+      } catch (canvasErr) {
+        console.error("Canvas compression failed, falling back to direct base64 reader:", canvasErr);
+        URL.revokeObjectURL(objectUrl);
+        triggerFileReaderFallback(file, callback);
       }
-      
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
-      
-      // Export as compressed JPEG (75% quality is perfect for OCR and speed)
-      const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.75);
-      const base64 = compressedDataUrl.split(",")[1];
-      callback(base64, "image/jpeg");
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    
+    img.onerror = function (imgErr) {
+      console.error("Image loading failed in compressImage, falling back to direct base64 reader:", imgErr);
+      URL.revokeObjectURL(objectUrl);
+      triggerFileReaderFallback(file, callback);
+    };
+    
+    img.src = objectUrl;
+  } catch (err) {
+    console.error("Critical error in compressImage objectUrl process:", err);
+    triggerFileReaderFallback(file, callback);
+  }
+}
+
+function triggerFileReaderFallback(file, callback) {
+  try {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const base64 = e.target.result.split(",")[1];
+        const mime = file.type || "image/jpeg";
+        callback(base64, mime);
+      } catch (err) {
+        showLoading(false);
+        alert("ไม่สามารถอ่านรูปภาพนี้ได้ กรุณาลองอัปโหลดรูปภาพอื่น");
+      }
+    };
+    reader.onerror = function () {
+      showLoading(false);
+      alert("ไม่สามารถอ่านรูปภาพนี้ได้ กรุณาลองอัปโหลดรูปภาพอื่น");
+    };
+    reader.readAsDataURL(file);
+  } catch (fallbackErr) {
+    showLoading(false);
+    alert("ไม่สามารถอ่านรูปภาพนี้ได้ กรุณาลองอัปโหลดรูปภาพอื่น");
+  }
 }
 
 function resetUploadState() {
