@@ -46,9 +46,17 @@ const btnInfoBack = document.getElementById("btn-info-back");
 const btnInfoConfirm = document.getElementById("btn-info-confirm");
 
 // DOM Elements - Final Action Section
-const btnDownloadPdf = document.getElementById("btn-download-pdf");
+const btnGotoSignature = document.getElementById("btn-goto-signature");
 const btnPrintNative = document.getElementById("btn-print-native");
 const btnRestart = document.getElementById("btn-restart");
+
+// DOM Elements - e-Signature Section
+const stepSignature = document.getElementById("step-signature");
+const signatureCanvas = document.getElementById("signature-canvas");
+const btnSignatureBack = document.getElementById("btn-signature-back");
+const btnSignatureClear = document.getElementById("btn-signature-clear");
+const btnSignatureConfirm = document.getElementById("btn-signature-confirm");
+const docSignatureImg = document.getElementById("doc-signature-img");
 
 // DOM Elements - A4 Live Preview
 const docName = document.getElementById("doc-name");
@@ -62,6 +70,8 @@ const docLicenseImg = document.getElementById("doc-license-img");
 let currentFile = null;
 let currentImageBase64 = null;
 let isAiMode = false;
+let signatureCtx = null;
+let isDrawingSignature = false;
 let extractedData = {
   name: "",
   id_card: "",
@@ -119,6 +129,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initCropperEvents();
   initFormEvents();
   initExportEvents();
+  initSignatureEvents();
 
 
 
@@ -175,7 +186,7 @@ function getThaiDateString() {
  * Handles UI step switching
  */
 function switchStep(targetStep) {
-  const steps = [stepUpload, stepCrop, stepInfo, stepActions];
+  const steps = [stepUpload, stepCrop, stepInfo, stepActions, stepSignature];
   steps.forEach(step => {
     if (step === targetStep) {
       step.classList.add("active");
@@ -187,6 +198,11 @@ function switchStep(targetStep) {
   // Automatically recalculate A4 document preview scaling when showing final step
   if (targetStep === stepActions) {
     setTimeout(adjustDocumentScale, 50);
+  }
+
+  // Trigger signature canvas resizing to fit container boundary
+  if (targetStep === stepSignature) {
+    setTimeout(resizeSignatureCanvas, 50);
   }
 }
 
@@ -1178,41 +1194,9 @@ function generatePrintRender() {
    ========================================================================== */
 
 function initExportEvents() {
-  // Download PDF button (uses html2pdf.js)
-  btnDownloadPdf.addEventListener("click", () => {
-    // If running on a mobile device over HTTP (non-localhost/127.0.0.1), alert the user to use Print -> Save as PDF
-    const isLocalMobileHttp = window.location.protocol === "http:" && 
-                              window.location.hostname !== "localhost" && 
-                              window.location.hostname !== "127.0.0.1";
-    
-    if (isLocalMobileHttp && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      alert("คำแนะนำสำหรับการดาวน์โหลดบนมือถือ:\n\nเนื่องจากคุณเข้าใช้งานผ่านลิงก์ IP วงแลนแบบ HTTP (ไม่ใช่ HTTPS) บราวเซอร์จะบล็อกการดาวน์โหลดไฟล์ตรงๆ เพื่อความปลอดภัย\n\nรบกวนคุณกดปุ่ม 'สั่งพิมพ์เอกสาร (Print)' ด้านล่างแทน แล้วเลือกตัวเลือก 'บันทึกเป็น PDF' (Save as PDF) จากนั้นกดเซฟลงเครื่องได้อย่างปลอดภัยครับ");
-      return;
-    }
-
-    const element = document.getElementById("document-preview");
-    
-    // Temporary apply absolute positioning constraints to prevent render shifts during html2canvas capture
-    element.style.boxShadow = "none";
-    
-    const opt = {
-      margin:       0,
-      filename:     `BMW_TestDrive_${inputName.value.trim().replace(/\s+/g, "_") || "Document"}.pdf`,
-      image:        { type: "jpeg", quality: 0.98 },
-      html2canvas:  { 
-        scale: 2.5, // High resolution scale
-        useCORS: true,
-        logging: false
-        // Removed letterRendering: true to resolve Thai font overlapping line height bugs
-      },
-      jsPDF:        { unit: "mm", format: "a4", orientation: "portrait" }
-    };
-    
-    // Generate and download
-    window.html2pdf().set(opt).from(element).save().then(() => {
-      // Re-apply box shadow for display viewport
-      element.style.boxShadow = "0 10px 40px rgba(0, 0, 0, 0.6)";
-    });
+  // Go to e-Signature button
+  btnGotoSignature.addEventListener("click", () => {
+    switchStep(stepSignature);
   });
 
   // Print natively button (triggers styled media query output)
@@ -1249,6 +1233,17 @@ function resetAllData() {
   docLicenseImg.src = "";
   docLicenseImg.classList.add("hidden");
   docLicensePlaceholder.classList.remove("hidden");
+  
+  // Hide signature image preview
+  if (docSignatureImg) {
+    docSignatureImg.src = "";
+    docSignatureImg.classList.add("hidden");
+  }
+  
+  // Clear signature canvas
+  if (signatureCanvas && signatureCtx) {
+    signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+  }
   
   extractedData = {
     name: "",
@@ -1581,4 +1576,155 @@ function showErrorMessage(msg) {
       errBox.remove();
     }
   }, 12000);
+}
+
+/**
+ * Step 5: e-Signature Events and Canvas Drawing Logic
+ */
+function initSignatureEvents() {
+  if (!signatureCanvas) return;
+  
+  signatureCtx = signatureCanvas.getContext("2d");
+  
+  // Configure ink strokes for signature drawing
+  signatureCtx.strokeStyle = "#0B2D6F"; // Dark blue ink for signature! Looks authentic!
+  signatureCtx.lineWidth = 3.5; // Smooth thick lines
+  signatureCtx.lineCap = "round";
+  signatureCtx.lineJoin = "round";
+  
+  let lastX = 0;
+  let lastY = 0;
+  
+  // Get pointer coordinates relative to canvas bounding box
+  const getCoordinates = (e) => {
+    const rect = signatureCanvas.getBoundingClientRect();
+    
+    // Support scale ratio factors if client bounding rect size doesn't match canvas resolution
+    const scaleX = signatureCanvas.width / rect.width;
+    const scaleY = signatureCanvas.height / rect.height;
+    
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+  };
+  
+  // Start drawing
+  signatureCanvas.addEventListener("pointerdown", (e) => {
+    isDrawingSignature = true;
+    const coords = getCoordinates(e);
+    lastX = coords.x;
+    lastY = coords.y;
+    
+    // Draw a single dot if user just taps
+    signatureCtx.beginPath();
+    signatureCtx.arc(lastX, lastY, signatureCtx.lineWidth / 2, 0, Math.PI * 2);
+    signatureCtx.fillStyle = signatureCtx.strokeStyle;
+    signatureCtx.fill();
+  });
+  
+  // Draw while moving
+  signatureCanvas.addEventListener("pointermove", (e) => {
+    if (!isDrawingSignature) return;
+    
+    // Prevent default scrolling on touch screens
+    e.preventDefault();
+    
+    const coords = getCoordinates(e);
+    
+    signatureCtx.beginPath();
+    signatureCtx.moveTo(lastX, lastY);
+    signatureCtx.lineTo(coords.x, coords.y);
+    signatureCtx.stroke();
+    
+    lastX = coords.x;
+    lastY = coords.y;
+  });
+  
+  // Stop drawing
+  const stopDrawing = () => {
+    isDrawingSignature = false;
+  };
+  
+  signatureCanvas.addEventListener("pointerup", stopDrawing);
+  signatureCanvas.addEventListener("pointerleave", stopDrawing);
+  
+  // Clear signature canvas
+  btnSignatureClear.addEventListener("click", () => {
+    if (signatureCtx) {
+      signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+    }
+  });
+  
+  // Go back from signature
+  btnSignatureBack.addEventListener("click", () => {
+    switchStep(stepActions);
+  });
+  
+  // Confirm and save signature
+  btnSignatureConfirm.addEventListener("click", () => {
+    // Check if signature is empty
+    if (isCanvasEmpty(signatureCanvas)) {
+      showErrorMessage("กรุณาลงลายมือชื่อก่อนกดยืนยัน");
+      return;
+    }
+    
+    try {
+      // Export signature drawing to transparent base64 PNG data url
+      const sigDataUrl = signatureCanvas.toDataURL("image/png");
+      docSignatureImg.src = sigDataUrl;
+      docSignatureImg.classList.remove("hidden");
+      
+      // Regenerate the A4 preview document image to include the signature!
+      generatePrintRender();
+      
+      // Go back to the actions step
+      switchStep(stepActions);
+    } catch (err) {
+      console.error("Signature save error:", err);
+      showErrorMessage("ไม่สามารถบันทึกลายเซ็นได้: " + err.message);
+    }
+  });
+}
+
+/**
+ * Checks if the signature canvas has any drawings on it
+ */
+function isCanvasEmpty(canvas) {
+  const ctx = canvas.getContext("2d");
+  const buffer = new Uint32Array(ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer);
+  return !buffer.some(color => color !== 0);
+}
+
+/**
+ * Resizes the signature canvas rendering buffer resolution to match display bounds.
+ * Called automatically when stepSignature is activated.
+ */
+function resizeSignatureCanvas() {
+  if (!signatureCanvas) return;
+  const rect = signatureCanvas.getBoundingClientRect();
+  
+  // Only resize if the display resolution differs to prevent unnecessary clears
+  if (signatureCanvas.width !== rect.width) {
+    // Save current drawing if any
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = signatureCanvas.width;
+    tempCanvas.height = signatureCanvas.height;
+    const tempCtx = tempCanvas.getContext("2d");
+    tempCtx.drawImage(signatureCanvas, 0, 0);
+    
+    // Adjust resolution width (height is fixed to 200px CSS)
+    signatureCanvas.width = rect.width;
+    signatureCanvas.height = 200;
+    
+    // Reconfigure stroke styles
+    signatureCtx = signatureCanvas.getContext("2d");
+    signatureCtx.strokeStyle = "#0B2D6F";
+    signatureCtx.lineWidth = 3.5;
+    signatureCtx.lineCap = "round";
+    signatureCtx.lineJoin = "round";
+    
+    // Restore previous drawing stretched to new resolution width
+    signatureCtx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, signatureCanvas.width, signatureCanvas.height);
+  }
 }
