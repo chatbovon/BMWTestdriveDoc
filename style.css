@@ -777,12 +777,13 @@ body {
   display: none;
 }
 
-@media print {
-  @page {
-    size: A4 portrait;
-    margin: 0;
-  }
+/* Page Setup - Placed at root level to prevent WebKit from ignoring page-margins */
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
 
+@media print {
   /* Hide everything unrelated to printing */
   .control-panel,
   .preview-header-bar,
