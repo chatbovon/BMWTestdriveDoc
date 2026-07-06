@@ -121,12 +121,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initExportEvents();
 
 
-  if (uploadFileText) {
-    uploadFileText.addEventListener("click", (e) => {
-      e.stopPropagation();
-      fileInput.click();
-    });
-  }
+
 
   // Listen for resize to scale document preview
   window.addEventListener("resize", adjustDocumentScale);
@@ -223,13 +218,7 @@ function initUploadEvents() {
     }
   });
 
-  // Clicking upload area
-  uploadZone.addEventListener("click", () => {
-    // Only trigger file click if preview is not shown
-    if (uploadPreviewContainer.classList.contains("hidden")) {
-      fileInput.click();
-    }
-  });
+
 
   fileInput.addEventListener("change", (e) => {
     if (e.target.files.length > 0) {
