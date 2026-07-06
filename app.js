@@ -338,45 +338,62 @@ function initUploadEvents() {
 }
 
 function handleFileSelection(file) {
-  if (!file.type.startsWith("image/")) {
-    alert("กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น");
-    return;
-  }
-  
-  currentFile = file;
-  showLoading(true);
-  
-  // Compress image and load as base64 Data URL (guarantees print preview and html2canvas visibility)
-  compressImage(file, (compressedBase64, displayUrl, mimeType) => {
-    try {
-      currentImageBase64 = compressedBase64;
-      
-      // Safe, memory-efficient source assignment (either ObjectURL or compressed ~200KB URL)
-      uploadPreview.src = displayUrl;
-      
-      // Toggle UI display
-      const promptEl = uploadZone.querySelector(".upload-prompt");
-      if (promptEl) promptEl.classList.add("hidden");
-      
-      uploadPreviewContainer.classList.remove("hidden");
-      btnProcessImage.classList.remove("hidden");
-      
-      // Update button text depending on mode
-      if (isAiMode) {
-        btnProcessImage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"/><path d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5.5Z"/><path d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1Z"/></svg> วิเคราะห์รูปภาพด้วย AI`;
-      } else {
-        btnProcessImage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> ดำเนินการต่อ (แมนนวล)`;
-      }
-      
-      if (window.lucide) {
-        window.lucide.createIcons();
-      }
-    } catch (err) {
-      console.error("Error in handleFileSelection callback:", err);
-    } finally {
-      showLoading(false);
+  try {
+    if (!file) {
+      alert("ไม่พบไฟล์รูปภาพ");
+      return;
     }
-  });
+    
+    const fileName = file.name ? file.name.toLowerCase() : "";
+    const isImgExtension = fileName.endsWith(".jpg") || 
+                           fileName.endsWith(".jpeg") || 
+                           fileName.endsWith(".png") || 
+                           fileName.endsWith(".heic") || 
+                           fileName.endsWith(".heif") || 
+                           fileName.endsWith(".webp");
+                           
+    const isImgType = file.type && file.type.startsWith("image/");
+                           
+    if (!isImgType && !isImgExtension) {
+      alert("กรุณาอัปโหลดไฟล์รูปภาพเท่านั้น (.jpg, .png, .heic)");
+      return;
+    }
+    
+    currentFile = file;
+    showLoading(true);
+    
+    compressImage(file, (compressedBase64, displayUrl, mimeType) => {
+      try {
+        currentImageBase64 = compressedBase64;
+        uploadPreview.src = displayUrl;
+        
+        const promptEl = uploadZone.querySelector(".upload-prompt");
+        if (promptEl) promptEl.classList.add("hidden");
+        
+        uploadPreviewContainer.classList.remove("hidden");
+        btnProcessImage.classList.remove("hidden");
+        
+        if (isAiMode) {
+          btnProcessImage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"/><path d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5.5Z"/><path d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1Z"/></svg> วิเคราะห์รูปภาพด้วย AI`;
+        } else {
+          btnProcessImage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> ดำเนินการต่อ (แมนนวล)`;
+        }
+        
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      } catch (err) {
+        console.error("Error in handleFileSelection callback:", err);
+        alert("เกิดข้อผิดพลาดในการแสดงผลพรีวิว: " + err.message);
+      } finally {
+        showLoading(false);
+      }
+    });
+  } catch (globalErr) {
+    console.error("Critical error in handleFileSelection:", globalErr);
+    showLoading(false);
+    alert("เกิดข้อผิดพลาดในการเลือกไฟล์: " + globalErr.message);
+  }
 }
 
 /**
