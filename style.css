@@ -594,6 +594,15 @@ body {
   /* CSS scale transforms will be applied dynamically via JS in app.js */
 }
 
+.doc-bmw-logo {
+  position: absolute;
+  top: 15mm;
+  right: 12mm;
+  width: 18mm;
+  height: 18mm;
+  object-fit: contain;
+}
+
 /* Document typography and spacing */
 .doc-title {
   text-align: center;
@@ -916,4 +925,10 @@ body {
 .os-android .doc-image-attachment {
   width: 95mm !important;
   height: 55mm !important;
+}
+
+/* Android OS BMW Logo Override */
+.os-android .doc-bmw-logo {
+  top: 30mm !important;
+  right: 17mm !important;
 }
