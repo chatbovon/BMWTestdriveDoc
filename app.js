@@ -1731,13 +1731,41 @@ function generatePrintRender(callback) {
   element.style.boxShadow = "none";
   element.style.transform = "none";
   
+  const logo = element.querySelector(".doc-bmw-logo");
+  let origLogoTop = "";
+  let origLogoRight = "";
+  if (logo) {
+    origLogoTop = logo.style.top;
+    origLogoRight = logo.style.right;
+  }
+  
   // Set print padding (Android padding reduced by 5mm and top increased by 15mm as requested)
   const isAndroidDevice = document.body.classList.contains("os-android");
   if (isAndroidDevice) {
     element.style.padding = "25mm 11mm 10mm 11mm";
   } else {
-    element.style.padding = "10mm 6mm 10mm 6mm";
+    // iOS print margins: v82 padding was 10mm 6mm 10mm 6mm.
+    // v83 adds +20mm top padding and +10mm left/right padding.
+    // So print padding becomes 30mm 16mm 10mm 16mm.
+    element.style.padding = "30mm 16mm 10mm 16mm";
+    if (logo) {
+      logo.style.top = "22mm";
+      logo.style.right = "16mm";
+    }
   }
+  
+  const cleanup = () => {
+    element.style.boxShadow = origBoxShadow;
+    element.style.transform = origTransform;
+    element.style.padding = origPadding;
+    if (logo) {
+      logo.style.top = origLogoTop;
+      logo.style.right = origLogoRight;
+    }
+    if (overlayTitle) overlayTitle.textContent = origTitle;
+    if (overlayText) overlayText.textContent = origText;
+    showLoading(false);
+  };
   
   // Use scale: 2 (crisp print detail without iOS Safari canvas crash)
   const scaleFactor = 2;
@@ -1758,25 +1786,14 @@ function generatePrintRender(callback) {
         printImg.src = dataUrl;
       }
       
-      // Restore styling
-      element.style.boxShadow = origBoxShadow;
-      element.style.transform = origTransform;
-      element.style.padding = origPadding;
-      if (overlayTitle) overlayTitle.textContent = origTitle;
-      if (overlayText) overlayText.textContent = origText;
-      showLoading(false);
+      cleanup();
       
       if (typeof callback === "function") {
         callback();
       }
     }).catch(err => {
       console.error("Print pre-rendering failed:", err);
-      element.style.boxShadow = origBoxShadow;
-      element.style.transform = origTransform;
-      element.style.padding = origPadding;
-      if (overlayTitle) overlayTitle.textContent = origTitle;
-      if (overlayText) overlayText.textContent = origText;
-      showLoading(false);
+      cleanup();
       
       // Fallback
       if (typeof callback === "function") {
@@ -1785,12 +1802,7 @@ function generatePrintRender(callback) {
     });
   } catch (err) {
     console.error("Print pre-rendering synchronous error:", err);
-    element.style.boxShadow = origBoxShadow;
-    element.style.transform = origTransform;
-    element.style.padding = origPadding;
-    if (overlayTitle) overlayTitle.textContent = origTitle;
-    if (overlayText) overlayText.textContent = origText;
-    showLoading(false);
+    cleanup();
     
     // Fallback
     if (typeof callback === "function") {
