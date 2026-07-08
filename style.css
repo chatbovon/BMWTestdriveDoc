@@ -580,7 +580,7 @@ body {
   min-height: 297mm;
   background-color: #FFFFFF;
   color: #000000;
-  padding: 50mm 27mm 12mm 27mm; /* Adjusted: +20mm top, +10mm left/right for iOS */
+  padding: 30mm 17mm 12mm 17mm; /* Match Android page margins */
   display: flex;
   flex-direction: column;
   position: relative;
@@ -594,8 +594,8 @@ body {
 
 .doc-bmw-logo {
   position: absolute;
-  top: 36mm; /* Adjusted: +20mm top for iOS */
-  right: 27mm; /* Adjusted: +10mm right for iOS */
+  top: 16mm;
+  right: 17mm;
   width: 9mm;
   height: 9mm;
   object-fit: contain;
