@@ -48,6 +48,7 @@ const btnInfoConfirm = document.getElementById("btn-info-confirm");
 // DOM Elements - Final Action Section
 const btnGotoSignature = document.getElementById("btn-goto-signature");
 const btnPrintNative = document.getElementById("btn-print-native");
+const btnDownloadImage = document.getElementById("btn-download-image");
 const btnRestart = document.getElementById("btn-restart");
 
 // DOM Elements - e-Signature Section
@@ -1149,6 +1150,32 @@ function initExportEvents() {
       window.print();
     });
   });
+
+  // Download document image button
+  if (btnDownloadImage) {
+    btnDownloadImage.addEventListener("click", () => {
+      generatePrintRender(() => {
+        const printImg = document.getElementById("print-rendered-image");
+        if (printImg && printImg.src && printImg.src.startsWith("data:")) {
+          try {
+            const link = document.createElement("a");
+            const nameVal = inputName.value.trim() || "Customer";
+            const cleanName = nameVal.replace(/[^a-zA-Z0-9ก-๙\s-_]/g, "").replace(/\s+/g, "_");
+            link.download = `BMW_TestDrive_${cleanName}.jpg`;
+            link.href = printImg.src;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          } catch (e) {
+            console.error("Image download failed:", e);
+            showErrorMessage("เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ: " + e.message);
+          }
+        } else {
+          showErrorMessage("ไม่พบไฟล์รูปภาพที่เรนเดอร์ไว้ กรุณาลองใหม่อีกครั้ง");
+        }
+      });
+    });
+  }
 
   // Start Over button
   btnRestart.addEventListener("click", () => {
