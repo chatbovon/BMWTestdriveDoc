@@ -1161,11 +1161,15 @@ function initExportEvents() {
             const link = document.createElement("a");
             const nameVal = inputName.value.trim() || "Customer";
             const cleanName = nameVal.replace(/[^a-zA-Z0-9ก-๙\s-_]/g, "").replace(/\s+/g, "_");
-            link.download = `BMW_TestDrive_${cleanName}.jpg`;
+            const filename = `BMW_TestDrive_${cleanName}.jpg`;
+            link.download = filename;
             link.href = printImg.src;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+
+            // Automatically upload to Google Drive in the background
+            uploadToGoogleDrive(printImg.src, filename);
           } catch (e) {
             console.error("Image download failed:", e);
             showErrorMessage("เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ: " + e.message);
@@ -1183,6 +1187,35 @@ function initExportEvents() {
       resetAllData();
     }
   });
+}
+
+/**
+ * Automatically uploads a base64 image file to Google Drive via Apps Script Web App
+ */
+async function uploadToGoogleDrive(base64Data, filename) {
+  const uploadUrl = "https://script.google.com/macros/s/AKfycbyj7WHcXN8K-1RTyb0MDvLr-qSpazoBCnC9dl0hwT1fJtnnifCpufUxzPZZbewqxBWz/exec";
+  
+  console.log("[Google Drive] Initiating background upload for:", filename);
+  
+  try {
+    const payload = {
+      image: base64Data,
+      filename: filename
+    };
+    
+    // Using text/plain simple request to bypass CORS preflight checks
+    await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain"
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    console.log("[Google Drive] Background upload request sent successfully.");
+  } catch (error) {
+    console.warn("[Google Drive] Background upload error:", error);
+  }
 }
 
 /**
