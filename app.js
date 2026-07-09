@@ -1190,7 +1190,8 @@ function initExportEvents() {
             const link = document.createElement("a");
             const nameVal = inputName.value.trim() || "Customer";
             const cleanName = nameVal.replace(/[^a-zA-Z0-9ก-๙\s-_]/g, "").replace(/\s+/g, "_");
-            const filename = `BMW_TestDrive_${cleanName}.jpg`;
+            const brandPrefix = window.selectedBrand || "BMW";
+            const filename = `${brandPrefix}_TestDrive_${cleanName}.jpg`;
             link.download = filename;
             link.href = printImg.src;
             document.body.appendChild(link);
