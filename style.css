@@ -596,8 +596,9 @@ body {
   position: absolute;
   top: 16mm;
   right: 17mm;
-  width: 9mm;
   height: 9mm;
+  width: auto;
+  max-width: 18mm;
   object-fit: contain;
 }
 
@@ -932,4 +933,54 @@ body {
 .os-android .doc-bmw-logo {
   top: 16mm !important;
   right: 17mm !important;
+}
+
+/* Brand Selection Upload Buttons */
+.brand-upload-container {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.btn-brand-upload {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px 16px;
+  background-color: var(--color-dark-surface);
+  border: 2px dashed var(--color-dark-border);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.btn-brand-upload:hover {
+  border-color: var(--color-bmw-blue);
+  background-color: var(--color-bmw-blue-light);
+  color: var(--color-bmw-blue);
+  transform: translateY(-2px);
+}
+
+.btn-brand-upload .btn-logo {
+  height: 38px;
+  width: auto;
+  max-width: 70px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
+}
+
+@media (max-width: 576px) {
+  .brand-upload-container {
+    flex-direction: column;
+    gap: 12px;
+  }
 }

@@ -241,7 +241,36 @@ function initUploadEvents() {
     }
   });
 
+  // Selected brand state
+  window.selectedBrand = "BMW";
 
+  const btnUploadBmw = document.getElementById("btn-upload-bmw");
+  const btnUploadMini = document.getElementById("btn-upload-mini");
+  const docBrandLogo = document.getElementById("doc-brand-logo");
+
+  if (btnUploadBmw) {
+    btnUploadBmw.addEventListener("click", (e) => {
+      e.stopPropagation();
+      window.selectedBrand = "BMW";
+      if (docBrandLogo) {
+        docBrandLogo.src = "BMWlogo(G+W).png";
+        docBrandLogo.alt = "BMW Logo";
+      }
+      fileInput.click();
+    });
+  }
+
+  if (btnUploadMini) {
+    btnUploadMini.addEventListener("click", (e) => {
+      e.stopPropagation();
+      window.selectedBrand = "MINI";
+      if (docBrandLogo) {
+        docBrandLogo.src = "MINIlogo.png";
+        docBrandLogo.alt = "MINI Logo";
+      }
+      fileInput.click();
+    });
+  }
 
   fileInput.addEventListener("change", (e) => {
     if (e.target.files.length > 0) {
@@ -1223,6 +1252,14 @@ async function uploadToGoogleDrive(base64Data, filename) {
  */
 function resetAllData() {
   resetUploadState();
+  
+  // Reset brand logo to BMW
+  window.selectedBrand = "BMW";
+  const docBrandLogo = document.getElementById("doc-brand-logo");
+  if (docBrandLogo) {
+    docBrandLogo.src = "BMWlogo(G+W).png";
+    docBrandLogo.alt = "BMW Logo";
+  }
   
   // Clear form fields
   inputName.value = "";

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BMW Test Drive Request Document Generator</title>
+  <title>Millennium Auto Test Drive Document</title>
   <!-- Google Fonts: Inter for UI, Sarabun for Thai document -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" referrerpolicy="no-referrer" />
   
   <!-- Custom Styling -->
-  <link rel="stylesheet" href="style.css?v=36">
+  <link rel="stylesheet" href="style.css?v=37">
 </head>
 <body>
   <!-- App Shell -->
@@ -32,8 +32,8 @@
       <header class="app-header">
         <div class="logo-area">
           <div class="title-wrapper">
-            <h1>BMW Test Drive</h1>
-            <p>ระบบสร้างเอกสารใบขอทดลองขับขี่ (v88)</p>
+            <h1>Millennium Auto Test Drive Document</h1>
+            <p>ระบบสร้างเอกสารใบขอทดลองขับขี่ (v89)</p>
           </div>
         </div>
         
@@ -56,9 +56,17 @@
           <div class="upload-zone" id="upload-zone">
             <input type="file" id="file-input" accept="image/*" class="file-input-hidden">
             <div class="upload-prompt" id="upload-prompt">
-              <svg xmlns="http://www.w3.org/2000/svg" class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="48" height="48" style="margin-bottom: 12px; color: var(--color-bmw-blue);"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
-              <p class="primary-text" id="upload-file-text" style="cursor: pointer; text-decoration: underline; color: #0653b6; font-weight: bold; display: inline-block; font-size: 11pt;">เลือกไฟล์รูปภาพใบขับขี่</p>
-              <p class="secondary-text" style="margin-top: 6px;">รองรับไฟล์ PNG, JPG, JPEG (ขนาดไม่เกิน 10MB)</p>
+              <div class="brand-upload-container">
+                <button type="button" class="btn-brand-upload" id="btn-upload-bmw">
+                  <img src="BMWlogo(G+W).png" alt="BMW Logo" class="btn-logo">
+                  <span>อัปโหลดใบขับขี่ (BMW)</span>
+                </button>
+                <button type="button" class="btn-brand-upload" id="btn-upload-mini">
+                  <img src="MINIlogo.png" alt="MINI Logo" class="btn-logo">
+                  <span>อัปโหลดใบขับขี่ (MINI)</span>
+                </button>
+              </div>
+              <p class="secondary-text" style="margin-top: 12px; text-align: center;">รองรับไฟล์ PNG, JPG, JPEG (ขนาดไม่เกิน 10MB)</p>
             </div>
             <div class="preview-container hidden" id="upload-preview-container">
               <img id="upload-preview" src="" alt="Driver's License Preview">
@@ -232,8 +240,8 @@
       <!-- A4 Page Container -->
       <div class="a4-page-viewport">
         <div id="document-preview" class="a4-document">
-          <!-- BMW Logo at top-right corner -->
-          <img src="BMWlogo(G+W).png" alt="BMW Logo" class="doc-bmw-logo">
+          <!-- Brand Logo at top-right corner -->
+          <img src="BMWlogo(G+W).png" alt="Brand Logo" class="doc-bmw-logo" id="doc-brand-logo">
           <!-- Official Document Content -->
           <h2 class="doc-title">ข้อตกลงชดใช้ค่าเสียหาย</h2>
           <h3 class="doc-subtitle">(ใบคำขอทดลองขับรถยนต์ BMW)</h3>
@@ -323,7 +331,7 @@
 
 
   <!-- Application Logic Modules -->
-  <script type="module" src="gemini.js?v=88"></script>
-  <script type="module" src="app.js?v=88"></script>
+  <script type="module" src="gemini.js?v=89"></script>
+  <script type="module" src="app.js?v=89"></script>
 </body>
 </html>
