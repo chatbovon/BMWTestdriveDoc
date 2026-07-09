@@ -95,6 +95,7 @@ let licenseValidation = {
   isValid: true,
   isExpired: false,
   isWrongType: false,
+  isMotorcycle: false,
   expiryDateStr: "",
   typeStr: ""
 };
@@ -315,6 +316,7 @@ function initUploadEvents() {
           isValid: true,
           isExpired: false,
           isWrongType: false,
+          isMotorcycle: false,
           expiryDateStr: extractedData.expiry_date,
           typeStr: extractedData.license_type
         };
@@ -334,9 +336,10 @@ function initUploadEvents() {
         if (extractedData.license_type) {
           const typeLower = extractedData.license_type.toLowerCase();
           const hasCar = typeLower.includes("รถยนต์");
-          const hasMotorcycle = typeLower.includes("จักรยานยนต์") || typeLower.includes("สองล้อ");
+          const hasMotorcycle = typeLower.includes("จักรยานยนต์") || typeLower.includes("สองล้อ") || typeLower.includes("จักรยาน");
           
-          if (hasMotorcycle && !hasCar) {
+          if (hasMotorcycle) {
+            licenseValidation.isMotorcycle = true;
             licenseValidation.isWrongType = true;
           } else if (!hasCar) {
             licenseValidation.isWrongType = true;
@@ -375,6 +378,7 @@ function initUploadEvents() {
           isValid: true,
           isExpired: false,
           isWrongType: false,
+          isMotorcycle: false,
           expiryDateStr: "",
           typeStr: ""
         };
@@ -572,6 +576,7 @@ function resetUploadState() {
     isValid: true,
     isExpired: false,
     isWrongType: false,
+    isMotorcycle: false,
     expiryDateStr: "",
     typeStr: ""
   };
@@ -1137,7 +1142,9 @@ function initFormEvents() {
       if (licenseValidation.isExpired) {
         warnMsg += `• ใบอนุญาตขับขี่หมดอายุแล้ว (หมดอายุวันที่: ${formatThaiDate(licenseValidation.expiryDateStr)})\n`;
       }
-      if (licenseValidation.isWrongType) {
+      if (licenseValidation.isMotorcycle) {
+        warnMsg += `• เป็นใบอนุญาตขับรถจักรยานยนต์ (ตรวจพบ: "${licenseValidation.typeStr || 'ไม่ระบุ'}" ซึ่งไม่สามารถใช้ทดลองขับขี่รถยนต์ได้)\n`;
+      } else if (licenseValidation.isWrongType) {
         warnMsg += `• ประเภทใบอนุญาตไม่ถูกต้อง (ตรวจพบ: "${licenseValidation.typeStr || 'ไม่ระบุ'}" ซึ่งต้องเป็นประเภท "ใบอนุญาตขับรถยนต์ส่วนบุคคล" เท่านั้น)\n`;
       }
       warnMsg += "\nคุณแน่ใจและต้องการข้ามไปดำเนินการกรอกข้อมูลต่อใช่หรือไม่?";
@@ -1301,6 +1308,7 @@ function resetAllData() {
     isValid: true,
     isExpired: false,
     isWrongType: false,
+    isMotorcycle: false,
     expiryDateStr: "",
     typeStr: ""
   };
@@ -1360,7 +1368,9 @@ function updateValidationWarningUI() {
     if (licenseValidation.isExpired) {
       warningHtml += `<li><b>ใบอนุญาตหมดอายุแล้ว:</b> หมดอายุวันที่ ${formatThaiDate(licenseValidation.expiryDateStr)}</li>`;
     }
-    if (licenseValidation.isWrongType) {
+    if (licenseValidation.isMotorcycle) {
+      warningHtml += `<li><b>ใบอนุญาตขับรถจักรยานยนต์:</b> ระบบตรวจพบว่าเป็นใบอนุญาตขับรถจักรยานยนต์ ซึ่งไม่สามารถใช้ทดลองขับขี่รถยนต์ได้ (ประเภทที่ตรวจพบ: "${licenseValidation.typeStr || 'ไม่ระบุ'}")</li>`;
+    } else if (licenseValidation.isWrongType) {
       warningHtml += `<li><b>ประเภทใบอนุญาตไม่ถูกต้อง:</b> ต้องเป็นประเภท "ใบอนุญาตขับรถยนต์ส่วนบุคคล" เท่านั้น (ประเภทที่ตรวจพบ: "${licenseValidation.typeStr || 'ไม่ระบุ'}")</li>`;
     }
     
