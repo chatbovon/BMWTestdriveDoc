@@ -650,6 +650,10 @@ body {
   text-align: left;
 }
 
+.first-term-item {
+  margin-top: 1.35em; /* Add 1 line height blank space before clause 1 */
+}
+
 .no-indent {
   text-indent: 0 !important;
 }
