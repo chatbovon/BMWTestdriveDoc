@@ -642,17 +642,16 @@ body {
 }
 
 /* Rules / Terms list */
-.doc-terms-list {
-  padding-left: 1.2cm;
-  font-size: 12pt; /* Match Android list font size */
+.doc-terms-item {
+  font-size: 12pt; /* Match baseline font size */
+  text-indent: 0; /* Align numbers to the left margin exactly like PDF */
   line-height: 1.35; /* Reduced line-height */
-  margin-bottom: 8px; /* Reduced margin */
-  text-align: left; /* Changed from justify to fix Safari spacing gaps */
+  margin-bottom: 6px; /* Reduced margin */
+  text-align: left;
 }
 
-.doc-terms-list li {
-  margin-bottom: 4px; /* Reduced margin */
-  padding-left: 2px;
+.no-indent {
+  text-indent: 0 !important;
 }
 
 .sub-clause {
@@ -912,7 +911,7 @@ body {
 }
 .os-android .doc-date-line,
 .os-android .doc-body-paragraph,
-.os-android .doc-terms-list,
+.os-android .doc-terms-item,
 .os-android .doc-license-attachment-wrapper .label-text,
 .os-android .sign-line,
 .os-android .sign-role {
