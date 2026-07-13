@@ -96,6 +96,9 @@ let licenseValidation = {
   isExpired: false,
   isWrongType: false,
   isMotorcycle: false,
+  isInvalidDoc: false,
+  isUnreadable: false,
+  qualityIssues: [],
   expiryDateStr: "",
   typeStr: ""
 };
@@ -317,6 +320,9 @@ function initUploadEvents() {
           isExpired: false,
           isWrongType: false,
           isMotorcycle: false,
+          isInvalidDoc: !result.is_thai_drivers_license,
+          isUnreadable: !result.is_readable,
+          qualityIssues: result.quality_issues || [],
           expiryDateStr: extractedData.expiry_date,
           typeStr: extractedData.license_type
         };
@@ -346,7 +352,11 @@ function initUploadEvents() {
           }
         }
         
-        licenseValidation.isValid = !licenseValidation.isExpired && !licenseValidation.isWrongType;
+        licenseValidation.isValid = 
+          !licenseValidation.isExpired && 
+          !licenseValidation.isWrongType && 
+          !licenseValidation.isInvalidDoc && 
+          !licenseValidation.isUnreadable;
         
         // Update validation warning UI box
         updateValidationWarningUI();
@@ -379,6 +389,9 @@ function initUploadEvents() {
           isExpired: false,
           isWrongType: false,
           isMotorcycle: false,
+          isInvalidDoc: false,
+          isUnreadable: false,
+          qualityIssues: [],
           expiryDateStr: "",
           typeStr: ""
         };
@@ -577,6 +590,9 @@ function resetUploadState() {
     isExpired: false,
     isWrongType: false,
     isMotorcycle: false,
+    isInvalidDoc: false,
+    isUnreadable: false,
+    qualityIssues: [],
     expiryDateStr: "",
     typeStr: ""
   };
@@ -1053,6 +1069,25 @@ function initCropperEvents() {
         // Apply 2D Perspective Homography Warp to straighten the card perfectly
         warpPerspectiveBilinear(cropImage, canvas, srcPoints, destPoints);
         
+        // 1. OpenCV.js Client-Side Blur Detection
+        const sharpnessScore = calculateSharpness(canvas);
+        console.log("[Sharpness Check] Laplacian Variance:", sharpnessScore);
+        
+        if (sharpnessScore >= 0 && sharpnessScore < 80) {
+          const proceed = confirm(
+            "คำเตือน: รูปภาพใบขับขี่มีความเบลอหรือความคมชัดต่ำกว่าเกณฑ์มาตรฐาน (คะแนนความคมชัด: " + Math.round(sharpnessScore) + ")\n\n" +
+            "• ตัวหนังสือบนบัตรอาจอ่านยากหรืออาจเกิดข้อผิดพลาดในการดึงข้อมูลด้วย AI\n" +
+            "• แนะนำให้ถ่ายรูปในที่ที่มีแสงสว่างเพียงพอและโฟกัสให้ชัดเจน\n\n" +
+            "คุณต้องการใช้รูปนี้ต่อไป หรือต้องการยกเลิกเพื่ออัปโหลด/ถ่ายรูปใหม่?"
+          );
+          
+          if (!proceed) {
+            showLoading(false);
+            switchStep(stepUpload);
+            return;
+          }
+        }
+        
         // Render straightened image into the A4 document preview box
         const croppedDataUrl = canvas.toDataURL("image/jpeg", 0.95);
         docLicenseImg.src = croppedDataUrl;
@@ -1138,7 +1173,7 @@ function initFormEvents() {
     
     // Confirm if license fails validation (expired or incorrect type)
     if (isAiMode && (!licenseValidation.isValid)) {
-      let warnMsg = "คำเตือน: ตรวจพบข้อมูลใบอนุญาตขับขี่ไม่เป็นไปตามเงื่อนไขทดลองขับขี่รถยนต์ BMW\n";
+      let warnMsg = "คำเตือน: ตรวจพบข้อมูลใบอนุญาตขับขี่ไม่เป็นไปตามเงื่อนไขทดลองขับขี่รถยนต์ BMW/MINI\n";
       if (licenseValidation.isExpired) {
         warnMsg += `• ใบอนุญาตขับขี่หมดอายุแล้ว (หมดอายุวันที่: ${formatThaiDate(licenseValidation.expiryDateStr)})\n`;
       }
@@ -1146,6 +1181,12 @@ function initFormEvents() {
         warnMsg += `• เป็นใบอนุญาตขับรถจักรยานยนต์ (ตรวจพบ: "${licenseValidation.typeStr || 'ไม่ระบุ'}" ซึ่งไม่สามารถใช้ทดลองขับขี่รถยนต์ได้)\n`;
       } else if (licenseValidation.isWrongType) {
         warnMsg += `• ประเภทใบอนุญาตไม่ถูกต้อง (ตรวจพบ: "${licenseValidation.typeStr || 'ไม่ระบุ'}" ซึ่งต้องเป็นประเภท "ใบอนุญาตขับรถยนต์ส่วนบุคคล" เท่านั้น)\n`;
+      }
+      if (licenseValidation.isInvalidDoc) {
+        warnMsg += `• เอกสารไม่ใช่ใบอนุญาตขับขี่รถยนต์ของไทย (ระบบไม่สามารถยืนยันข้อมูลบัตรได้)\n`;
+      }
+      if (licenseValidation.isUnreadable) {
+        warnMsg += `• รูปภาพไม่ชัดเจนหรือมีแสงสะท้อนทับตัวหนังสือสำคัญ\n`;
       }
       warnMsg += "\nคุณแน่ใจและต้องการข้ามไปดำเนินการกรอกข้อมูลต่อใช่หรือไม่?";
       
@@ -1309,6 +1350,9 @@ function resetAllData() {
     isExpired: false,
     isWrongType: false,
     isMotorcycle: false,
+    isInvalidDoc: false,
+    isUnreadable: false,
+    qualityIssues: [],
     expiryDateStr: "",
     typeStr: ""
   };
@@ -1372,6 +1416,23 @@ function updateValidationWarningUI() {
       warningHtml += `<li><b>ใบอนุญาตขับรถจักรยานยนต์:</b> ระบบตรวจพบว่าเป็นใบอนุญาตขับรถจักรยานยนต์ ซึ่งไม่สามารถใช้ทดลองขับขี่รถยนต์ได้ (ประเภทที่ตรวจพบ: "${licenseValidation.typeStr || 'ไม่ระบุ'}")</li>`;
     } else if (licenseValidation.isWrongType) {
       warningHtml += `<li><b>ประเภทใบอนุญาตไม่ถูกต้อง:</b> ต้องเป็นประเภท "ใบอนุญาตขับรถยนต์ส่วนบุคคล" เท่านั้น (ประเภทที่ตรวจพบ: "${licenseValidation.typeStr || 'ไม่ระบุ'}")</li>`;
+    }
+    if (licenseValidation.isInvalidDoc) {
+      warningHtml += `<li><b>เอกสารไม่ใช่ใบอนุญาตขับขี่รถยนต์:</b> เอกสารที่ตรวจพบไม่ใช่ใบอนุญาตขับขี่ของไทย หรือประเภทไม่ถูกต้อง กรุณาอัปโหลด 'ใบอนุญาตขับรถยนต์ส่วนบุคคล'</li>`;
+    }
+    if (licenseValidation.isUnreadable) {
+      const issueTranslations = {
+        blur: "ภาพเบลอหรือไม่โฟกัส",
+        glare: "มีแสงสะท้อนทับข้อมูล",
+        occlusion: "มีนิ้วมือ/สิ่งของบดบังตัวอักษร",
+        shadow: "มีเงาทับข้อความสำคัญ",
+        low_light: "แสงสว่างน้อยเกินไป"
+      };
+      const formattedIssues = (licenseValidation.qualityIssues || [])
+        .map(issue => issueTranslations[issue] || issue)
+        .join(", ");
+      
+      warningHtml += `<li><b>รูปภาพไม่ชัดเจน/มีแสงสะท้อน:</b> ตัวหนังสือบนบัตรอาจอ่านยาก (ปัญหาที่พบ: ${formattedIssues || 'อ่านข้อมูลบางส่วนไม่ได้'}) แนะนำให้กดถ่ายใหม่</li>`;
     }
     
     warningHtml += `
@@ -1889,5 +1950,52 @@ function generatePrintRender(callback) {
     if (typeof callback === "function") {
       callback();
     }
+  }
+}
+
+/**
+ * Calculates image sharpness using Laplacian variance with OpenCV.js.
+ * @param {HTMLCanvasElement} canvas The canvas containing the cropped card image
+ * @returns {number} The variance score. Higher is sharper. -1 if OpenCV.js is not loaded.
+ */
+function calculateSharpness(canvas) {
+  if (!window.cv || !window.isOpenCvReady) {
+    console.warn("OpenCV.js is not initialized yet.");
+    return -1;
+  }
+  
+  try {
+    const cv = window.cv;
+    // 1. Load image from canvas into Mat
+    let src = cv.imread(canvas);
+    let gray = new cv.Mat();
+    let laplacian = new cv.Mat();
+    
+    // 2. Convert to grayscale
+    cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+    
+    // 3. Apply Laplacian filter
+    cv.Laplacian(gray, laplacian, cv.CV_64F);
+    
+    // 4. Calculate mean and standard deviation
+    let mean = new cv.Mat();
+    let stddev = new cv.Mat();
+    cv.meanStdDev(laplacian, mean, stddev);
+    
+    // 5. Variance is standard deviation squared
+    let sd = stddev.doubleAt(0, 0);
+    let variance = sd * sd;
+    
+    // Cleanup Mats to prevent WebAssembly memory leaks
+    src.delete();
+    gray.delete();
+    laplacian.delete();
+    mean.delete();
+    stddev.delete();
+    
+    return variance;
+  } catch (error) {
+    console.error("Failed to calculate sharpness with OpenCV.js:", error);
+    return -1;
   }
 }

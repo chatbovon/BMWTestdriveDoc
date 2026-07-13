@@ -45,6 +45,9 @@ Analyze the provided image and extract:
    Scale the coordinates from 0 to 1000 (where 0 is top/left, and 1000 is bottom/right).
 4. The driver's license type in Thai, e.g. "ใบอนุญาตขับรถยนต์ส่วนบุคคล", "ใบอนุญาตขับรถยนต์ส่วนบุคคลชั่วคราว", "ใบอนุญาตขับรถจักรยานยนต์ส่วนบุคคล". Look for the Thai label.
 5. The expiration date of the license (วันหมดอายุ). Format it as "YYYY-MM-DD" (Christian Era). If the year on the card is in the Buddhist Era (พ.ศ.), subtract 543 to convert to the Christian year (e.g. พ.ศ. 2574 becomes 2031).
+6. Determine if the uploaded card is a valid Thai Driver's License (is_thai_drivers_license: true/false). If it is a Thai ID Card, Passport, or other document, set this to false.
+7. Evaluate if the text details on the card are clearly readable and not excessively blurry, obscured, or blocked by fingers/glare (is_readable: true/false).
+8. List any image quality issues detected, such as "blur", "glare" (reflections/light spots), "occlusion" (hands/fingers blocking text), "shadow", or "low_light" (quality_issues).
 `;
 
   const payload = {
@@ -89,9 +92,22 @@ Analyze the provided image and extract:
           expiry_date: {
             type: "STRING",
             description: "The expiration date of the license in YYYY-MM-DD format (subtract 543 from B.E. year)"
+          },
+          is_thai_drivers_license: {
+            type: "BOOLEAN",
+            description: "Whether the card is a valid Thai Driver's License (return false for ID cards, passports, credit cards)"
+          },
+          is_readable: {
+            type: "BOOLEAN",
+            description: "Whether the text details are clearly readable (return false if blurry, heavily reflecting light, or obscured)"
+          },
+          quality_issues: {
+            type: "ARRAY",
+            items: { type: "STRING" },
+            description: "List of detected quality issues, e.g. ['blur', 'glare', 'occlusion', 'shadow', 'low_light']. Return empty array if none."
           }
         },
-        required: ["name", "id_card", "card_corners", "license_type", "expiry_date"]
+        required: ["name", "id_card", "card_corners", "license_type", "expiry_date", "is_thai_drivers_license", "is_readable", "quality_issues"]
       }
     }
   };
