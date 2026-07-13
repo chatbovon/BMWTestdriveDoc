@@ -328,13 +328,28 @@ function initUploadEvents() {
         };
         
         // Check Expiration
-        if (extractedData.expiry_date) {
+        if (extractedData.expiry_date === "lifetime" || (extractedData.expiry_date && extractedData.expiry_date.toLowerCase() === "lifetime")) {
+          licenseValidation.isExpired = false;
+          extractedData.expiry_date = "ตลอดชีพ";
+          licenseValidation.expiryDateStr = "ตลอดชีพ";
+        } else if (extractedData.expiry_date) {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           const expDate = new Date(extractedData.expiry_date);
           
           if (!isNaN(expDate.getTime())) {
             licenseValidation.isExpired = expDate < today;
+            
+            // Heuristic: If expiry date is more than 10 years in the future, it is highly likely
+            // a misread due to holographic glare/reflection (e.g. 2569 read as 2602).
+            const tenYearsFromNow = new Date();
+            tenYearsFromNow.setFullYear(today.getFullYear() + 10);
+            if (expDate > tenYearsFromNow) {
+              licenseValidation.isUnreadable = true;
+              if (!licenseValidation.qualityIssues.includes("glare")) {
+                licenseValidation.qualityIssues.push("glare");
+              }
+            }
           }
         }
         
@@ -1454,6 +1469,7 @@ function updateValidationWarningUI() {
  */
 function formatThaiDate(dateStr) {
   if (!dateStr) return "ไม่ระบุ";
+  if (dateStr === "ตลอดชีพ" || dateStr.toLowerCase() === "lifetime") return "ตลอดชีพ";
   try {
     const parts = dateStr.split("-");
     if (parts.length !== 3) return dateStr;
