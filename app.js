@@ -1263,6 +1263,9 @@ function initExportEvents() {
 
             // Automatically upload to Google Drive in the background
             uploadToGoogleDrive(printImg.src, filename);
+            
+            // Pop up mobile download preview modal for easy long-press save
+            showMobileDownloadModal(printImg.src, filename);
           } catch (e) {
             console.error("Image download failed:", e);
             showErrorMessage("เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ: " + e.message);
@@ -2014,4 +2017,56 @@ function calculateSharpness(canvas) {
     console.error("Failed to calculate sharpness with OpenCV.js:", error);
     return -1;
   }
+}
+
+/**
+ * Displays a fullscreen modal with the generated image preview
+ * so mobile (iOS/Android) users can easily long-press and save to Photos.
+ * @param {string} imageSrc Data URL or source URL of the image
+ * @param {string} filename Output file name
+ */
+function showMobileDownloadModal(imageSrc, filename) {
+  // Check if modal already exists, remove it
+  let existing = document.getElementById("mobile-download-modal");
+  if (existing) existing.remove();
+  
+  const modal = document.createElement("div");
+  modal.id = "mobile-download-modal";
+  modal.className = "mobile-download-modal";
+  
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📥 เตรียมรูปภาพเสร็จสิ้น!</h3>
+        <button class="modal-close-btn" id="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="ios-instruction">
+          <p><strong>💡 สำหรับผู้ใช้ iPhone / iPad:</strong></p>
+          <ul>
+            <li>รูปภาพถูกบันทึกไปที่แอป <b>"ไฟล์" (Files)</b> -> โฟลเดอร์ <b>"รายการดาวน์โหลด" (Downloads)</b> เรียบร้อยแล้ว</li>
+            <li>หรือหากต้องการบันทึกเข้าอัลบั้มรูปภาพโดยตรง: ให้<b>แตะค้างที่รูปภาพด้านล่าง</b> แล้วเลือก <b>"บันทึกไปยังแอปรูปภาพ" (Save to Photos)</b> ได้เลยครับ</li>
+          </ul>
+        </div>
+        <div class="image-preview-wrapper">
+          <img src="${imageSrc}" alt="Document Preview" class="modal-preview-image">
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Close events
+  const closeBtn = modal.querySelector("#modal-close-btn");
+  closeBtn.addEventListener("click", () => {
+    modal.remove();
+  });
+  
+  // Also close on click outside the content card
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
 }
