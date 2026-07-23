@@ -1250,22 +1250,33 @@ function initExportEvents() {
         const printImg = document.getElementById("print-rendered-image");
         if (printImg && printImg.src && printImg.src.startsWith("data:")) {
           try {
-            const link = document.createElement("a");
             const nameVal = inputName.value.trim() || "Customer";
             const cleanName = nameVal.replace(/[^a-zA-Z0-9ก-๙\s-_]/g, "").replace(/\s+/g, "_");
             const brandPrefix = window.selectedBrand || "BMW";
             const filename = `${brandPrefix}_TestDrive_${cleanName}.jpg`;
-            link.download = filename;
-            link.href = printImg.src;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
 
             // Automatically upload to Google Drive in the background
             uploadToGoogleDrive(printImg.src, filename);
-            
-            // Pop up mobile download preview modal for easy long-press save
-            showMobileDownloadModal(printImg.src, filename);
+
+            const file = dataURLtoFile(printImg.src, filename);
+
+            // Check if browser supports Web Share API for files (iOS Safari, mobile browsers)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              navigator.share({
+                files: [file],
+                title: "ใบทดลองขับขี่",
+                text: `${brandPrefix} Test Drive - ${cleanName}`
+              })
+              .then(() => {
+                console.log("Document shared successfully.");
+              })
+              .catch(err => {
+                console.warn("Share failed or cancelled, falling back to standard download:", err);
+                triggerStandardDownload(printImg.src, filename);
+              });
+            } else {
+              triggerStandardDownload(printImg.src, filename);
+            }
           } catch (e) {
             console.error("Image download failed:", e);
             showErrorMessage("เกิดข้อผิดพลาดในการดาวน์โหลดรูปภาพ: " + e.message);
@@ -2069,4 +2080,39 @@ function showMobileDownloadModal(imageSrc, filename) {
       modal.remove();
     }
   });
+}
+
+/**
+ * Helper to convert Base64 Data URL to Javascript File Object
+ * @param {string} dataurl Base64 Data URL
+ * @param {string} filename Output file name
+ * @returns {File} JS File object
+ */
+function dataURLtoFile(dataurl, filename) {
+  var arr = dataurl.split(','),
+      mime = arr[0].match(/:(.*?);/)[1],
+      bstr = atob(arr[1]), 
+      n = bstr.length, 
+      u8arr = new Uint8Array(n);
+  while(n--){
+      u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, {type:mime});
+}
+
+/**
+ * Triggers standard browser download (anchor tag click) and opens mobile fallback modal
+ * @param {string} src Base64 image string
+ * @param {string} fname Output filename
+ */
+function triggerStandardDownload(src, fname) {
+  const link = document.createElement("a");
+  link.download = fname;
+  link.href = src;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Pop up mobile download preview modal for easy long-press save
+  showMobileDownloadModal(src, fname);
 }
