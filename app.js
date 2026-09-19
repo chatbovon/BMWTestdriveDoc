@@ -251,6 +251,7 @@ function initUploadEvents() {
   const btnUploadBmw = document.getElementById("btn-upload-bmw");
   const btnUploadMini = document.getElementById("btn-upload-mini");
   const docBrandLogo = document.getElementById("doc-brand-logo");
+  const docBrandSubtitle = document.getElementById("doc-brand-subtitle");
 
   if (btnUploadBmw) {
     btnUploadBmw.addEventListener("click", (e) => {
@@ -259,6 +260,9 @@ function initUploadEvents() {
       if (docBrandLogo) {
         docBrandLogo.src = "BMWlogo(G+W).png";
         docBrandLogo.alt = "BMW Logo";
+      }
+      if (docBrandSubtitle) {
+        docBrandSubtitle.textContent = "(ใบคำขอทดลองขับรถยนต์ BMW)";
       }
       fileInput.click();
     });
@@ -271,6 +275,9 @@ function initUploadEvents() {
       if (docBrandLogo) {
         docBrandLogo.src = "MINIlogo.png";
         docBrandLogo.alt = "MINI Logo";
+      }
+      if (docBrandSubtitle) {
+        docBrandSubtitle.textContent = "(ใบคำขอทดลองขับรถยนต์ MINI)";
       }
       fileInput.click();
     });
@@ -1222,6 +1229,10 @@ function updatePreviewDocumentText() {
   docName.textContent = inputName.value.trim() || ".........................................................................................................";
   docIdCard.textContent = inputIdCard.value.trim() || "........................................................................................";
   docDate.textContent = inputDate.value.trim() || ".......................................................";
+  const docBrandSubtitle = document.getElementById("doc-brand-subtitle");
+  if (docBrandSubtitle) {
+    docBrandSubtitle.textContent = window.selectedBrand === "MINI" ? "(ใบคำขอทดลองขับรถยนต์ MINI)" : "(ใบคำขอทดลองขับรถยนต์ BMW)";
+  }
 }
 
 
@@ -1331,12 +1342,16 @@ async function uploadToGoogleDrive(base64Data, filename) {
 function resetAllData() {
   resetUploadState();
   
-  // Reset brand logo to BMW
+  // Reset brand logo and subtitle to BMW
   window.selectedBrand = "BMW";
   const docBrandLogo = document.getElementById("doc-brand-logo");
   if (docBrandLogo) {
     docBrandLogo.src = "BMWlogo(G+W).png";
     docBrandLogo.alt = "BMW Logo";
+  }
+  const docBrandSubtitle = document.getElementById("doc-brand-subtitle");
+  if (docBrandSubtitle) {
+    docBrandSubtitle.textContent = "(ใบคำขอทดลองขับรถยนต์ BMW)";
   }
   
   // Clear form fields
