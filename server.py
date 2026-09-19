@@ -62,7 +62,7 @@ class ProxyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return
                 
             # 4. Prepare and execute request to Google's Gemini API
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key={api_key}"
             
             req = urllib.request.Request(
                 url,
@@ -70,7 +70,7 @@ class ProxyHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
                 headers={'Content-Type': 'application/json'}
             )
             
-            print("[PROXY] Forwarding image request to Gemini API (gemini-3.1-flash-lite)...")
+            print("[PROXY] Forwarding image request to Gemini API (gemini-3.5-flash-lite)...")
             try:
                 with urllib.request.urlopen(req, timeout=35) as response:
                     res_data = response.read()
